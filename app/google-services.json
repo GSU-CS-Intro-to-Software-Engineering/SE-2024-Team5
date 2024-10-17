@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "930764929817",
+    "project_id": "crystalballtaxes",
+    "storage_bucket": "crystalballtaxes.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930764929817:android:88cd887f0ae33d9cd36388",
+        "android_client_info": {
+          "package_name": "com.example.crystalballtaxes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdAppseqd2Y6-nn-ybZF_U9xiUgt921vE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
