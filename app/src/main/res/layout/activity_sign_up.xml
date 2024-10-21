@@ -39,13 +39,13 @@
                 android:ems="10"
                 android:inputType="text"
                 android:text="Name"
-                app:layout_constraintBottom_toTopOf="@+id/editTextTextEmailAddress2"
+                app:layout_constraintBottom_toTopOf="@+id/emailTextEdit"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <EditText
-                android:id="@+id/editTextTextEmailAddress2"
+                android:id="@+id/emailTextEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="35dp"
@@ -54,13 +54,13 @@
                 android:layout_marginBottom="26dp"
                 android:ems="10"
                 android:inputType="textEmailAddress"
-                app:layout_constraintBottom_toTopOf="@+id/editTextNumberPassword"
+                app:layout_constraintBottom_toTopOf="@+id/passwordTextEdit"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/editTextText" />
 
             <EditText
-                android:id="@+id/editTextNumberPassword"
+                android:id="@+id/passwordTextEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="34dp"
@@ -68,11 +68,28 @@
                 android:layout_marginEnd="104dp"
                 android:layout_marginBottom="159dp"
                 android:ems="10"
-                android:inputType="numberPassword"
+                android:inputType="textPassword"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/editTextTextEmailAddress2" />
+                app:layout_constraintTop_toBottomOf="@+id/emailTextEdit" />
+
+            <Button
+                android:id="@+id/signUp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Button"
+                tools:layout_editor_absoluteX="109dp"
+                tools:layout_editor_absoluteY="295dp" />
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:layout_editor_absoluteX="37dp"
+                tools:layout_editor_absoluteY="294dp" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>
