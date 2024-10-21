@@ -1,49 +1,42 @@
 package com.example.crystalballtaxes;
 
-import static android.content.ContentValues.TAG;
-
+import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class SignUpActivity extends AppCompatActivity {
+    //Components of Sign Up UI
+    private EditText nameTxtF, emailTxtF, passwordTxtF, phoneTxtF;
+    private Button createAccBtn, backBtn;
 
-    EditText emailTextEdit, passwordTextEdit;
-    Button signUpBtn;
-    ProgressBar progressBar;
-    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
-        // Initialize Firebase Auth
-        mAuth = FirebaseAuth.getInstance();
 
-        emailTextEdit = findViewById(R.id.emailTextEdit);
-        passwordTextEdit = findViewById(R.id.passwordTextEdit);
-        signUpBtn = findViewById(R.id.signUp);
-        progressBar = findViewById(R.id.progressBar);
+        //Assigning id's to Sign Up UI
+        nameTxtF = findViewById(R.id.newAccUserName);
+        emailTxtF = findViewById(R.id.newAccEmail);
+        passwordTxtF = findViewById(R.id.newAccPasswrd);
+        phoneTxtF = findViewById(R.id.newAccPhoneNum);
 
+        createAccBtn =findViewById(R.id.createNewAccBtn);
+    }
+
+    //Takes user back to login page when back arrow button is clicked
+    public void goBack(View v){
+        Intent i = new Intent(this, LoginActivity.class);
+        startActivity(i);
+
+    }
+}
+
+/*
         signUpBtn.setOnClickListener(view -> {
             progressBar.setVisibility(View.VISIBLE);
             String email = emailTextEdit.getText().toString();
@@ -79,3 +72,4 @@ public class SignUpActivity extends AppCompatActivity {
         });
         }
     }
+*/
