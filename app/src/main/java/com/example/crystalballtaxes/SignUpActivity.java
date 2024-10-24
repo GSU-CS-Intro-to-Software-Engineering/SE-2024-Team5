@@ -57,6 +57,7 @@ public class SignUpActivity extends AppCompatActivity {
                     return;
                 }
 
+                //firebase template for creating new account
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                             @Override
