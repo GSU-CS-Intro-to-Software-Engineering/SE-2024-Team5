@@ -45,6 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     //this ignores a false progress bar error
+    //TODO rewrite this to match signup activity
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {

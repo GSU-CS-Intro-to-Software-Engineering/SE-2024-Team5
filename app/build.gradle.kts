@@ -42,7 +42,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(libs.firebase.bom.v3351)
+    implementation(platform(libs.firebase.bom.v3351))
     implementation(libs.google.firebase.auth.ktx)
 
 }
