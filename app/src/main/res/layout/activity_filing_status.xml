@@ -6,12 +6,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/statusbackground"
-    tools:context=".TaxInfoPage1">
+    tools:context=".FilingStatusActivity">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView2"
-        android:layout_width="370dp"
-        android:layout_height="389dp"
+        android:layout_width="374dp"
+        android:layout_height="444dp"
         android:layout_marginTop="180dp"
         android:backgroundTint="#FFCF31"
         app:cardCornerRadius="30dp"
@@ -25,67 +25,91 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
-            android:layout_height="392dp">
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/textView"
                 android:layout_width="352dp"
                 android:layout_height="45dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="@font/aoboshi_one"
                 android:text="What is your filing status?"
                 android:textAlignment="center"
                 android:textSize="28sp"
                 app:layout_constraintBottom_toTopOf="@+id/radioGroup"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <RadioGroup
                 android:id="@+id/radioGroup"
-                android:layout_width="262dp"
-                android:layout_height="283dp"
-                android:layout_marginStart="50dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="57dp"
-                android:layout_marginBottom="27dp"
+                android:layout_width="263dp"
+                android:layout_height="360dp"
                 android:backgroundTint="#C37F7F"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView">
+                app:layout_constraintTop_toBottomOf="@+id/textView"
+                app:layout_constraintVertical_bias="0.5">
 
                 <RadioButton
                     android:id="@+id/singleRBtn"
                     android:layout_width="match_parent"
                     android:layout_height="71dp"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/radio_selector"
+                    android:button="@android:color/transparent"
+                    android:elevation="4dp"
                     android:fontFamily="@font/fugaz_one"
+                    android:padding="4dp"
                     android:text="Single"
+                    android:textAlignment="center"
+                    android:textColor="@drawable/text_color"
                     android:textSize="16sp" />
 
                 <RadioButton
                     android:id="@+id/marriedJointBtn"
                     android:layout_width="match_parent"
                     android:layout_height="71dp"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/radio_selector"
+                    android:button="@android:color/transparent"
+                    android:elevation="4dp"
                     android:fontFamily="@font/fugaz_one"
                     android:text="Married Filing Jointly"
+                    android:textAlignment="center"
+                    android:textColor="@drawable/text_color"
                     android:textSize="16sp" />
 
                 <RadioButton
                     android:id="@+id/marriedFiledSepRBtn"
                     android:layout_width="match_parent"
                     android:layout_height="71dp"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/radio_selector"
+                    android:button="@android:color/transparent"
+                    android:elevation="4dp"
                     android:fontFamily="@font/fugaz_one"
                     android:text="Married Filing Separately"
+                    android:textAlignment="center"
+                    android:textColor="@drawable/text_color"
                     android:textSize="16sp" />
 
                 <RadioButton
                     android:id="@+id/headOfHouseRBtn"
                     android:layout_width="match_parent"
                     android:layout_height="71dp"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/radio_selector"
+                    android:button="@android:color/transparent"
+                    android:elevation="4dp"
                     android:fontFamily="@font/fugaz_one"
                     android:text="Head of Household"
+                    android:textAlignment="center"
+                    android:textColor="@drawable/text_color"
                     android:textSize="16sp" />
             </RadioGroup>
 
