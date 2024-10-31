@@ -53,9 +53,6 @@ public class SignUpActivity extends AppCompatActivity {
         });
     }
 
-    //currently this does create an account properly
-    //but it does not have a way to log the user out or choose what activity to go to on launch once logged in
-    //TODO add a way to log the user out and go to main activity4
     private void createUser() {
         String email = emailTxtF.getText().toString();
         String password = passwordTxtF.getText().toString();
