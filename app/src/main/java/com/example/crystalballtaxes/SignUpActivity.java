@@ -3,6 +3,7 @@ package com.example.crystalballtaxes;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,12 +25,16 @@ public class SignUpActivity extends AppCompatActivity {
     private Button createAccBtn, backBtn;
     private ProgressBar signUpProgressBar;
     private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
+
+        // Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
 
         //Assigning id's to Sign Up UI
         nameTxtF = findViewById(R.id.newAccUserName);
@@ -38,43 +43,46 @@ public class SignUpActivity extends AppCompatActivity {
         phoneTxtF = findViewById(R.id.newAccPhoneNum);
         signUpProgressBar = findViewById(R.id.signUpProgressBar);
 
-        createAccBtn =findViewById(R.id.createNewAccBtn);
+        createAccBtn = findViewById(R.id.createNewAccBtn);
 
-        createAccBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                signUpProgressBar.setVisibility(View.VISIBLE);
-                String email = emailTxtF.getText().toString();
-                String password = passwordTxtF.getText().toString();
+        signUpProgressBar.setVisibility(View.INVISIBLE);
 
-                // Check if email and password are not empty
-                if(TextUtils.isEmpty(email)){
-                    Toast.makeText(SignUpActivity.this, "Enter email", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if(TextUtils.isEmpty(password)){
-                    Toast.makeText(SignUpActivity.this, "Enter password", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                //firebase template for creating new account
-                mAuth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                signUpProgressBar.setVisibility(View.GONE);
-                                if (task.isSuccessful()) {
-                                    Toast.makeText(SignUpActivity.this, "Account created.",
-                                            Toast.LENGTH_SHORT).show();
-                                } else {
-                                    // If sign in fails, display a message to the user.
-                                    Toast.makeText(SignUpActivity.this, "Authentication failed.",
-                                            Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
-            }
+        createAccBtn.setOnClickListener(view -> {
+            signUpProgressBar.setVisibility(View.VISIBLE);
+            createUser();
         });
+    }
+
+    //currently this does create an account properly
+    //but it does not have a way to log the user out or choose what activity to go to on launch once logged in
+    //TODO add a way to log the user out and go to main activity4
+    private void createUser() {
+        String email = emailTxtF.getText().toString();
+        String password = passwordTxtF.getText().toString();
+
+        if (TextUtils.isEmpty(email)) {
+            emailTxtF.setError("Email cannot be empty");
+            emailTxtF.requestFocus();
+        } else if (TextUtils.isEmpty(password)) {
+            passwordTxtF.setError("Password cannot be empty");
+            passwordTxtF.requestFocus();
+        } else {
+            //firebase template for creating a new user
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(SignUpActivity.this, "User registered successfully", Toast.LENGTH_SHORT).show();
+                                //takes to login activity after registration
+                                startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
+                                finish();
+                            } else {
+                                Toast.makeText(SignUpActivity.this, "Registration Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        }
     }
 
     //Takes user back to login page when back arrow button is clicked
