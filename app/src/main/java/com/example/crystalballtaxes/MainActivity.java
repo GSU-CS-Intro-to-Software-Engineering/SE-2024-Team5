@@ -33,6 +33,16 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e){
             Log.e("MainActivity", "Error starting FilingStatusActivity", e);
         }
+        Button dbBtn = findViewById(R.id.dbBtn);
+        try {
+            dbBtn.setOnClickListener(view -> {
+                Intent i = new Intent(this, DatabaseManagerGuiActivity.class);
+                startActivity(i);
+            });
+            }catch (Exception e){
+            Log.e("MainActivity", "Error starting DatabaseManagerGuiActivity", e);
+        }
+
 
     }
 

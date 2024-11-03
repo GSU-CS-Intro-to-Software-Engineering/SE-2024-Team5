@@ -1,26 +1,28 @@
 package com.example.crystalballtaxes;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class FilingStatusActivity extends AppCompatActivity {
-    private RadioGroup radioGroup;
     private RadioButton singleRBtn;
     private RadioButton marriedJointBtn;
     private RadioButton marriedFiledSepRBtn;
     private RadioButton headOfHouseRBtn;
-
+    private Button nextBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filing_status);
 
-        radioGroup = findViewById(R.id.radioGroup);
+        RadioGroup radioGroup = findViewById(R.id.radioGroup);
+        nextBtn = findViewById(R.id.nextBtn);
 
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -32,5 +34,12 @@ public class FilingStatusActivity extends AppCompatActivity {
             }
         });
 
+        nextBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(FilingStatusActivity.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }
