@@ -18,6 +18,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.example.crystalballtaxes.DatabaseHelper;
 
 public class SignUpActivity extends AppCompatActivity {
     //Components of Sign Up UI
@@ -26,6 +27,7 @@ public class SignUpActivity extends AppCompatActivity {
     private ProgressBar signUpProgressBar;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private DatabaseHelper db;
 
 
     @Override
@@ -35,6 +37,9 @@ public class SignUpActivity extends AppCompatActivity {
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+
+        // Initialize Database Helper
+        db = new DatabaseHelper(this);
 
         //Assigning id's to Sign Up UI
         nameTxtF = findViewById(R.id.newAccUserName);
@@ -56,6 +61,8 @@ public class SignUpActivity extends AppCompatActivity {
     private void createUser() {
         String email = emailTxtF.getText().toString();
         String password = passwordTxtF.getText().toString();
+        String name = nameTxtF.getText().toString();
+        String phone = phoneTxtF.getText().toString();
 
         if (TextUtils.isEmpty(email)) {
             emailTxtF.setError("Email cannot be empty");
@@ -63,7 +70,15 @@ public class SignUpActivity extends AppCompatActivity {
         } else if (TextUtils.isEmpty(password)) {
             passwordTxtF.setError("Password cannot be empty");
             passwordTxtF.requestFocus();
-        } else {
+        } else if(TextUtils.isEmpty(name)){
+            nameTxtF.setError("Name cannot be empty");
+            nameTxtF.requestFocus();
+        } else if(TextUtils.isEmpty(phone)) {
+            phoneTxtF.setError("Phone number cannot be empty");
+            phoneTxtF.requestFocus();
+        }else {
+            //add user to db
+            db.addUser(name, email, password, phone);
             //firebase template for creating a new user
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(new OnCompleteListener<AuthResult>() {

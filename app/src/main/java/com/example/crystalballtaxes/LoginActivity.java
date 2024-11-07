@@ -22,6 +22,10 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import com.example.crystalballtaxes.DatabaseHelper;
+
+//TODO  welcome user on signin
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText loginEmailInput, loginPassInput;
@@ -29,6 +33,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button loginBtn, signUpBtn;
     ProgressBar progressBar;
     private FirebaseAuth mAuth;
+    private DatabaseHelper db;
 
     //checks if user is already signed in also firebase template
     @Override
@@ -36,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
         // If user is already logged in then go to main activity
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if(currentUser != null){
+        if (currentUser != null) {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
             finish();
@@ -75,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void signInUser(){
+    private void signInUser() {
         String email = loginEmailInput.getText().toString();
         String password = loginPassInput.getText().toString();
 
@@ -85,22 +90,26 @@ public class LoginActivity extends AppCompatActivity {
         } else if (TextUtils.isEmpty(password)) {
             loginPassInput.setError("Password cannot be empty");
             loginPassInput.requestFocus();
-        } else {
+            //authenticate with db before checking with firebase
+        } else if (db.checkUser(email, password)) {
             mAuth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()){
+                            if (task.isSuccessful()) {
                                 //can enable updating ui based on user info like a welcome Name on login
-                                FirebaseUser user  = mAuth.getCurrentUser();
+                                FirebaseUser user = mAuth.getCurrentUser();
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                 startActivity(intent);
                                 finish();
-                            } else{
+                            } else {
                                 Toast.makeText(LoginActivity.this, "Login Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
+        } else {
+            Toast.makeText(LoginActivity.this, "User does not exist", Toast.LENGTH_SHORT).show();
+
         }
     }
 }

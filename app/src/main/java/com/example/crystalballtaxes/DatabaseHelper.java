@@ -127,8 +127,9 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     }
 
     //prints the user table to logcat with tag of DatabaseHelper
-    public void getCustomer(long id){
+    public String[] getCustomer(long id){
         SQLiteDatabase db = this.getReadableDatabase();
+        String[] customer = new String[4];
         //set up a cursor pointer to start reading the table from the beginning
         Cursor cursor = db.query(USER_TABLE, new String[]{KEY_ID, USER_NAME, USER_EMAIL, USER_PASSWORD, USER_PHONE}, KEY_ID + "=?",
                 new String[]{String.valueOf(id)}, null, null, null);
@@ -137,12 +138,17 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             Log.d(TAG, "id: " + cursor.getString(0)
                     + " name: " + cursor.getString(1)
                     + " email: " + cursor.getString(2));
+            customer[0] = cursor.getString(1); //name
+            customer[1] = cursor.getString(2); //email
+            customer[2] = cursor.getString(3); //password
+            customer[3] = cursor.getString(4); //phone
         } else {
             Log.d(TAG, "no user found with id " + id);
         }
         if (cursor != null){
             cursor.close();
         }
+        return customer;
     }
 
     //tax table operations
@@ -235,6 +241,26 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         //assert to avoid nullpointer exception
         assert taxCursor != null;
         taxCursor.close();
+    }
+
+    public boolean checkUser(String email, String password){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {USER_EMAIL, USER_PASSWORD};
+        String selection = USER_EMAIL + " = ?";
+        String[] selectionArgs = {email};
+
+        Cursor cursor = db.query(USER_TABLE, columns, selection, selectionArgs, null, null, null);
+
+        if(cursor != null && cursor.moveToFirst()){
+            @SuppressLint("Range") String storedPassword = cursor.getString(cursor.getColumnIndex(USER_PASSWORD));
+            @SuppressLint("Range") String storedEmail = cursor.getString(cursor.getColumnIndex(USER_EMAIL));
+
+            if(storedPassword.equals(password) && storedEmail.equals(email)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
