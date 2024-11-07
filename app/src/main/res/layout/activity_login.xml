@@ -91,7 +91,7 @@
                 android:textColorHint="@color/white"
                 app:layout_constraintBottom_toTopOf="@+id/passwordEditTxt"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.513"
+                app:layout_constraintHorizontal_bias="0.486"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/loginTitle" />
 
