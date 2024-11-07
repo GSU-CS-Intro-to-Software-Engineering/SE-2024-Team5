@@ -15,6 +15,9 @@
         android:theme="@style/Theme.CrystalBallTaxes"
         tools:targetApi="31">
         <activity
+            android:name=".DependentsActivity"
+            android:exported="false" />
+        <activity
             android:name=".FilingStatusActivity"
             android:exported="false" />
         <activity
