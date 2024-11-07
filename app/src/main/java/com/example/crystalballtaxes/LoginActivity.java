@@ -1,9 +1,12 @@
 package com.example.crystalballtaxes;
 
+import static android.content.ContentValues.TAG;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,7 +33,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText loginEmailInput, loginPassInput;
     private TextView forgetPass;
-    private Button loginBtn, signUpBtn;
+    private Button loginBtn, signUpBtn, forgotPassBtn;
     ProgressBar progressBar;
     private FirebaseAuth mAuth;
     private DatabaseHelper db;
@@ -77,6 +80,9 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(i);
             finish();
         });
+        forgetPass.setOnClickListener(view -> {
+            forgotPassword();
+        });
 
     }
 
@@ -111,5 +117,19 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(LoginActivity.this, "User does not exist", Toast.LENGTH_SHORT).show();
 
         }
+    }
+
+    public void forgotPassword(){
+
+        String email = loginEmailInput.getText().toString();
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "Email sent.");
+                        }
+                    }
+                });
     }
 }
