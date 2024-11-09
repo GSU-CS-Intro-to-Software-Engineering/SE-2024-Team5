@@ -16,20 +16,20 @@ import androidx.annotation.Nullable;
 * user_id(primary key), user_name, user_email, user_password(may use a hash), user_phone
 *
 * Tax table will have the following columns:
-* tax_info_id(primary key), user_id (foreign key), filing_status, income, (will add more as tax credits are added (potentially a JSON))
+* tax_info_id(primary key), user_id (foreign key), filing_status, income, (will add more as tax credits are added)
 *
-* TODO update signup to send info to the db as well
 * */
 public class DatabaseHelper extends SQLiteOpenHelper{
 
     //setting up for the databaseHelper constructor
     private static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "crystalBallTaxes.db";
-    static final int DATABASE_VERSION = 3;
+    static final int DATABASE_VERSION = 4;
 
     //initialize table names
     private static String USER_TABLE = "USERS";
     private static String TAX_INFO_TABLE = "TAX_INFO";
+    private static String DEPENDENT_INFO_TABLE = "DEPENDENTS";
 
     //initialize id column since both tables use it
     private static String KEY_ID = "ID";
@@ -42,27 +42,56 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
     //initialize tax table column names
     private static String TAX_INFO_ID = "TAX_INFO_ID";
+    private static String USER_ID = "USER_ID";
     private static String FILING_STATUS = "FILING_STATUS";
     private static String INCOME = "INCOME";
-    private static String USER_ID = "USER_ID";
+    private static String TAX_CREDITS = "TAX_CREDITS";
+    private static String ABOVE_LINE_DEDUCTIONS = "ABOVE_LINE_DEDUCTIONS";
+    private static String ITEMIZED_DEDUCTIONS = "ITEMIZED_DEDUCTIONS";
+    private static String DEPENDENTS = "DEPENDENTS";
+
+    //Initialize dependent table column names
+    private static String DEPENDENT_ID = "DEPENDENT_ID";
+    private static String DEPENDENT_FNAME = "DEPENDENT_FIRST_NAME";
+    private static String DEPENDENT_LNAME = "DEPENDENT_LAST_NAME";
+    private static String DEPENDENT_SSN = "DEPENDENT_SSN";
+    private static String DEPENDENT_DOB = "DEPENDENT_DOB";
+    private static String DEPENDENT_RELATION = "DEPENDENT_RELATION";
 
     //string query for creating the user table
-    private static final String CREATE_USER_TABLE = "CREATE TABLE " + USER_TABLE + "("
-            + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + USER_NAME + " TEXT, "
-            + USER_EMAIL + " TEXT, "
-            + USER_PASSWORD + " TEXT, "
-            + USER_PHONE + " TEXT);";
+    private static final String CREATE_USER_TABLE = "CREATE TABLE " + USER_TABLE + "(" +
+            KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            USER_NAME + " TEXT, " +
+            USER_EMAIL + " TEXT, " +
+            USER_PASSWORD + " TEXT, " +
+            USER_PHONE + " TEXT);";
 
     //string query for creating the tax table
     //uses foreign key to link the two tables together
-    private static final String CREATE_TABLE_TAX_INFO = "CREATE TABLE " + TAX_INFO_TABLE + "("
-            + TAX_INFO_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-            + INCOME + " REAL NOT NULL,"
-            + FILING_STATUS + " TEXT NOT NULL,"
+    private static final String CREATE_TABLE_TAX_INFO = "CREATE TABLE " + TAX_INFO_TABLE + "(" +
+            TAX_INFO_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+            USER_ID + " INTEGER," +
+            INCOME + " TEXT NOT NULL," +
+            FILING_STATUS + " TEXT NOT NULL," +
+            TAX_CREDITS + " TEXT," +
+            ABOVE_LINE_DEDUCTIONS + " TEXT," +
+            ITEMIZED_DEDUCTIONS + " TEXT," +
+            DEPENDENTS + " TEXT," +
+            "FOREIGN KEY (" + USER_ID + ") REFERENCES " + USER_TABLE + "(" + KEY_ID + ")" +
+            ")";
+
+    //create dependent table
+    private static final String CREATE_TABLE_DEPENDENTS = "CREATE TABLE " + DEPENDENT_INFO_TABLE + "("
             + USER_ID + " INTEGER,"
-            + "FOREIGN KEY (" + USER_ID + ") REFERENCES " + USER_TABLE + "(" + KEY_ID + ")"
-            + ")";
+            + DEPENDENT_ID + " INTEGER NOT NULL,"
+            + DEPENDENT_FNAME + " TEXT,"
+            + DEPENDENT_LNAME + " TEXT,"
+            + DEPENDENT_SSN + " TEXT,"
+            + DEPENDENT_DOB + " TEXT,"
+            + DEPENDENT_RELATION + " TEXT,"
+            + "PRIMARY KEY (" + DEPENDENT_ID + "," + USER_ID + ")," //composite primary key to ensure unique dependent id
+            + "FOREIGN KEY (" + USER_ID + ") REFERENCES " + USER_TABLE + "(" + KEY_ID + ")" +
+            ")";
 
     //constructor
     public DatabaseHelper(Context context){
@@ -74,6 +103,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_USER_TABLE);
         db.execSQL(CREATE_TABLE_TAX_INFO);
+        db.execSQL(CREATE_TABLE_DEPENDENTS);
     }
 
     //onupgrade function to wipe tables when version updates
@@ -81,6 +111,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + USER_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + TAX_INFO_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + DEPENDENT_INFO_TABLE);
         onCreate(db);
     }
 
@@ -152,6 +183,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     }
 
     //tax table operations
+    //rewrite these methods to be individual and only require useriD and the variable being added
     public long addTaxInfo(String filingStatus, String income, long userId){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -256,11 +288,30 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             @SuppressLint("Range") String storedEmail = cursor.getString(cursor.getColumnIndex(USER_EMAIL));
 
             if(storedPassword.equals(password) && storedEmail.equals(email)) {
+                cursor.close();
                 return true;
             }
         }
 
         return false;
     }
+
+    /*
+    * this will allow the primary key of dependents to find the next available int
+    * for the dependents using the user id
+     */
+    public int getNextDependentId(int userId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT MAX(dependent_id) FROM dependents WHERE user_id = ?", new String[]{String.valueOf(userId)});
+        int nextId = 0;
+        if (cursor.moveToFirst() && !cursor.isNull(0)) {
+            nextId = cursor.getInt(0) + 1;
+        }
+        cursor.close();
+        return nextId;
+    }
+
+    //TODO add dependent functions and tie getNextDependentId to adding a dependent funciton
+
 
 }
