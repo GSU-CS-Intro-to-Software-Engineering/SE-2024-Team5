@@ -4,6 +4,8 @@ import static android.content.ContentValues.TAG;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -57,6 +59,8 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        //initialize db
+        db = new DatabaseHelper(this);
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
@@ -97,27 +101,29 @@ public class LoginActivity extends AppCompatActivity {
             loginPassInput.setError("Password cannot be empty");
             loginPassInput.requestFocus();
             //authenticate with db before checking with firebase
-        } else if (db.checkUser(email, password)) {
-            mAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                //can enable updating ui based on user info like a welcome Name on login
-                                FirebaseUser user = mAuth.getCurrentUser();
-                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                finish();
-                            } else {
-                                Toast.makeText(LoginActivity.this, "Login Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+        } else // add null check to ensure the db is intialized
+            if (db != null && db.checkUser(email, password)) {
+                mAuth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                progressBar.setVisibility(View.GONE);  // Hide progress bar after authentication
+                                if (task.isSuccessful()) {
+                                    FirebaseUser user = mAuth.getCurrentUser();
+                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                } else {
+                                    Toast.makeText(LoginActivity.this, "Login Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                }
                             }
-                        }
-                    });
-        } else {
-            Toast.makeText(LoginActivity.this, "User does not exist", Toast.LENGTH_SHORT).show();
-
-        }
+                        });
+            } else {
+                progressBar.setVisibility(View.GONE);  // Hide progress bar if user doesn't exist
+                Toast.makeText(LoginActivity.this, "User does not exist", Toast.LENGTH_SHORT).show();
+            }
     }
+
 
     public void forgotPassword(){
 

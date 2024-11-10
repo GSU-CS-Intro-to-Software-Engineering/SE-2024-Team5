@@ -9,7 +9,11 @@ import android.util.Log;
 import android.database.Cursor;
 
 
-import androidx.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /*
 *
 * User table will have the following columns:
@@ -18,6 +22,8 @@ import androidx.annotation.Nullable;
 * Tax table will have the following columns:
 * tax_info_id(primary key), user_id (foreign key), filing_status, income, (will add more as tax credits are added)
 *
+*
+* TODO add more comments as i have to go to work
 * */
 public class DatabaseHelper extends SQLiteOpenHelper{
 
@@ -158,9 +164,9 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     }
 
     //prints the user table to logcat with tag of DatabaseHelper
-    public String[] getCustomer(long id){
+    public String[] getUser(long id){
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] customer = new String[4];
+        String[] user = new String[4];
         //set up a cursor pointer to start reading the table from the beginning
         Cursor cursor = db.query(USER_TABLE, new String[]{KEY_ID, USER_NAME, USER_EMAIL, USER_PASSWORD, USER_PHONE}, KEY_ID + "=?",
                 new String[]{String.valueOf(id)}, null, null, null);
@@ -169,110 +175,245 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             Log.d(TAG, "id: " + cursor.getString(0)
                     + " name: " + cursor.getString(1)
                     + " email: " + cursor.getString(2));
-            customer[0] = cursor.getString(1); //name
-            customer[1] = cursor.getString(2); //email
-            customer[2] = cursor.getString(3); //password
-            customer[3] = cursor.getString(4); //phone
+            user[0] = cursor.getString(1); //name
+            user[1] = cursor.getString(2); //email
+            user[2] = cursor.getString(3); //password
+            user[3] = cursor.getString(4); //phone
         } else {
             Log.d(TAG, "no user found with id " + id);
         }
         if (cursor != null){
             cursor.close();
         }
-        return customer;
+        return user;
+    }
+
+    public long getUserIdFromEmail(String userEmail) {
+        SQLiteDatabase database = this.getReadableDatabase();
+        long userId = -1; //ensure return -1 if does not exist
+
+        Cursor cursor = database.query(
+                "USERS",  // table name
+                new String[]{"ID"},  // columns to return
+                "EMAIL = ?",  // selection criteria
+                new String[]{userEmail},  // selection arguments
+                null,  // group by
+                null,  // having
+                null   // order by
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            @SuppressLint("Range")
+            long id = cursor.getLong(cursor.getColumnIndex("ID"));
+            userId = id;
+            cursor.close();
+        }
+
+        return userId;
     }
 
     //tax table operations
-    //rewrite these methods to be individual and only require useriD and the variable being added
-    public long addTaxInfo(String filingStatus, String income, long userId){
+    public long initializeTaxRecord(long userId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
-        values.put(INCOME, income);
-        values.put(FILING_STATUS, filingStatus);
         values.put(USER_ID, userId);
+        values.put(INCOME, "0");
+        values.put(FILING_STATUS, "");
+        values.put(TAX_CREDITS, "0");
+        values.put(ABOVE_LINE_DEDUCTIONS, "0");
+        values.put(ITEMIZED_DEDUCTIONS, "0");
 
         long id = db.insert(TAX_INFO_TABLE, null, values);
-        Log.d(TAG, "added Tax Info: " + id);
+        Log.d(TAG, "Initialized tax record: " + id + " for user: " + userId);
         return id;
     }
 
-    public boolean updateTaxInfo(long id, String filingStatus, String income, long userId){
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-
-        values.put(INCOME, income);
-        values.put(FILING_STATUS, filingStatus);
-
-        int rowsAffected = db.update(TAX_INFO_TABLE, values, KEY_ID + "=" + id, null);
-        Log.d(TAG, "updated Tax Info: " + rowsAffected);
-        return rowsAffected > 0;
-    }
-
-    public boolean deleteTaxInfo(long id){
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        int rowsAffected = db.delete(TAX_INFO_TABLE, TAX_INFO_ID + "= ?",
-                new String[]{String.valueOf(id)});
-        Log.d(TAG, "deleted Tax Info: " + rowsAffected);
-        return rowsAffected > 0;
-    }
-
-    public void getTaxInfo(long id) {
+    public boolean taxRecordExists(long userId) {
         SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TAX_INFO_TABLE,
+                new String[]{USER_ID},
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)},
+                null, null, null);
 
-        Cursor cursor = db.query(TAX_INFO_TABLE, new String[]{KEY_ID, INCOME, FILING_STATUS, USER_ID}, KEY_ID + "= ?",
-                new String[]{String.valueOf(id)}, null, null, null);
-
-        if (cursor != null && cursor.moveToFirst()) {
-
-            Log.d(TAG, "id: " + cursor.getString(0)
-                    + " income: " + cursor.getString(1)
-                    + " filing status: " + cursor.getString(2)
-                    + " user id: " + cursor.getString(3));
-        } else {
-            Log.d(TAG, "no tax info found with id " + id);
-        }
+        boolean exists = cursor != null && cursor.getCount() > 0;
         if (cursor != null) {
             cursor.close();
         }
+        //had a warning saying it needs to be inverted
+        return !exists;
+    }
+
+    @SuppressLint("Range")
+    public List<Map<String, String>> getTaxTable() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Map<String, String>> taxRecords = new ArrayList<>();
+
+        Cursor taxCursor = db.query(TAX_INFO_TABLE, null, null, null, null, null, null, null);
+
+        if (taxCursor != null && taxCursor.moveToFirst()) {
+            do {
+                Map<String, String> taxInfo = new HashMap<>();
+                taxInfo.put("tax_info_id", taxCursor.getString(taxCursor.getColumnIndex(TAX_INFO_ID)));
+                taxInfo.put("income", taxCursor.getString(taxCursor.getColumnIndex(INCOME)));
+                taxInfo.put("filing_status", taxCursor.getString(taxCursor.getColumnIndex(FILING_STATUS)));
+                taxInfo.put("user_id", taxCursor.getString(taxCursor.getColumnIndex(USER_ID)));
+                taxInfo.put("tax_credits", taxCursor.getString(taxCursor.getColumnIndex(TAX_CREDITS)));
+                taxInfo.put("above_line_deductions", taxCursor.getString(taxCursor.getColumnIndex(ABOVE_LINE_DEDUCTIONS)));
+                taxInfo.put("itemized_deductions", taxCursor.getString(taxCursor.getColumnIndex(ITEMIZED_DEDUCTIONS)));
+                taxInfo.put("dependents", taxCursor.getString(taxCursor.getColumnIndex(DEPENDENTS)));
+
+                taxRecords.add(taxInfo);
+
+                //log for debugging
+                Log.d(TAG, "Tax Info: " +
+                        "\nTax Info ID: " + taxInfo.get("tax_info_id") +
+                        "\nIncome: " + taxInfo.get("income") +
+                        "\nFiling Status: " + taxInfo.get("filing_status") +
+                        "\nCustomer ID: " + taxInfo.get("user_id") +
+                        "\nTax Credits: " + taxInfo.get("tax_credits") +
+                        "\nAbove Line Deductions: " + taxInfo.get("above_line_deductions") +
+                        "\nItemized Deductions: " + taxInfo.get("itemized_deductions") +
+                        "\nDependents: " + taxInfo.get("dependents"));
+
+            } while (taxCursor.moveToNext());
+        }
+
+        if (taxCursor != null) {
+            taxCursor.close();
+        }
+
+        return taxRecords;
+    }
+
+    public boolean updateFilingStatus(long userId, String filingStatus) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(FILING_STATUS, filingStatus);
+
+        int rowsAffected = db.update(TAX_INFO_TABLE,
+                values,
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)});
+
+        Log.d(TAG, "Updated filing status for user " + userId + ": " + filingStatus);
+        return rowsAffected > 0;
+    }
+
+    public boolean updateIncome(long userId, String income) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(INCOME, income);
+
+        int rowsAffected = db.update(TAX_INFO_TABLE,
+                values,
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)});
+
+        Log.d(TAG, "Updated income for user " + userId + ": " + income);
+        return rowsAffected > 0;
+    }
+
+    public boolean updateAboveLineDeductions(long userId, String deductions) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ABOVE_LINE_DEDUCTIONS, deductions);
+
+        int rowsAffected = db.update(TAX_INFO_TABLE,
+                values,
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)});
+
+        Log.d(TAG, "Updated above-line deductions for user " + userId + ": " + deductions);
+        return rowsAffected > 0;
+    }
+
+    public boolean updateItemizedDeductions(long userId, String deductions) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ITEMIZED_DEDUCTIONS, deductions);
+
+        int rowsAffected = db.update(TAX_INFO_TABLE,
+                values,
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)});
+
+        Log.d(TAG, "Updated itemized deductions for user " + userId + ": " + deductions);
+        return rowsAffected > 0;
+    }
+
+    public boolean updateTaxCredits(long userId, int credits) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(TAX_CREDITS, String.valueOf(credits));
+
+        int rowsAffected = db.update(TAX_INFO_TABLE,
+                values,
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)});
+
+        Log.d(TAG, "Updated tax credits for user " + userId + ": " + credits);
+        return rowsAffected > 0;
+    }
+
+
+    //standardizing get methods to return a data structure instead of logging to tag
+    @SuppressLint("Range")
+    public Map<String, String> getUserTaxInfo(long userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Map<String, String> taxInfo = new HashMap<>();
+
+        Cursor cursor = db.query(TAX_INFO_TABLE, null,
+                USER_ID + "=?",
+                new String[]{String.valueOf(userId)},
+                null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            taxInfo.put("filing_status", cursor.getString(cursor.getColumnIndex(FILING_STATUS)));
+            taxInfo.put("income", cursor.getString(cursor.getColumnIndex(INCOME)));
+            taxInfo.put("above_line_deductions", cursor.getString(cursor.getColumnIndex(ABOVE_LINE_DEDUCTIONS)));
+            taxInfo.put("itemized_deductions", cursor.getString(cursor.getColumnIndex(ITEMIZED_DEDUCTIONS)));
+            taxInfo.put("tax_credits", cursor.getString(cursor.getColumnIndex(TAX_CREDITS)));
+            cursor.close();
+        }
+
+        return taxInfo;
     }
 
     //get all users in the database
     //range suppress for get column index since it is possible for the db to not be initalized
     // when calling the method which would throw an error
     @SuppressLint("Range")
-    public void logALlData(){
+    public List<Map<String, String>> getUserTable() {
         SQLiteDatabase db = this.getReadableDatabase();
+        List<Map<String, String>> users = new ArrayList<>();
 
-        Log.d(TAG, "------ALL USERS-------: ");
-        Cursor userCursor = db.query(USER_TABLE,null, null, null, null, null, null, null);
+        Cursor userCursor = db.query(USER_TABLE, null, null, null, null, null, null, null);
+
         if (userCursor != null && userCursor.moveToFirst()) {
             do {
+                Map<String, String> user = new HashMap<>();
+                user.put("id", userCursor.getString(userCursor.getColumnIndex(USER_ID)));
+                user.put("name", userCursor.getString(userCursor.getColumnIndex(USER_NAME)));
+                user.put("email", userCursor.getString(userCursor.getColumnIndex(USER_EMAIL)));
+                user.put("phone", userCursor.getString(userCursor.getColumnIndex(USER_PHONE)));
+                users.add(user);
+
+                // Keep logging for debugging purposes
                 Log.d(TAG, "User: " +
-                        "\nID: " + userCursor.getLong(userCursor.getColumnIndex(USER_ID)) +
-                        "\nName: " + userCursor.getString(userCursor.getColumnIndex(USER_NAME)) +
-                        "\nEmail: " + userCursor.getString(userCursor.getColumnIndex(USER_EMAIL)) +
-                        "\nPhone: " + userCursor.getString(userCursor.getColumnIndex(USER_PHONE)));
+                        "\nID: " + user.get("id") +
+                        "\nName: " + user.get("name") +
+                        "\nEmail: " + user.get("email") +
+                        "\nPhone: " + user.get("phone"));
             } while (userCursor.moveToNext());
         }
-        userCursor.close();
 
-        //log tax info
-        Log.d(TAG, "------ALL TAX INFO-------: ");
-        Cursor taxCursor = db.query(TAX_INFO_TABLE,null, null, null, null, null, null, null);
-        if (taxCursor != null && taxCursor.moveToFirst()) {
-            do {
-                Log.d(TAG, "Tax Info: " +
-                        "\nTax Info ID: " + taxCursor.getLong(taxCursor.getColumnIndex(TAX_INFO_ID)) +
-                        "\nIncome: " + taxCursor.getDouble(taxCursor.getColumnIndex(INCOME)) +
-                        "\nFiling Status: " + taxCursor.getString(taxCursor.getColumnIndex(FILING_STATUS)) +
-                        "\nCustomer ID: " + taxCursor.getLong(taxCursor.getColumnIndex(USER_ID)));
-            } while (taxCursor.moveToNext());
+        if (userCursor != null) {
+            userCursor.close();
         }
-        //assert to avoid nullpointer exception
-        assert taxCursor != null;
-        taxCursor.close();
+
+        return users;
     }
 
     public boolean checkUser(String email, String password){
@@ -311,7 +452,74 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return nextId;
     }
 
-    //TODO add dependent functions and tie getNextDependentId to adding a dependent funciton
+    public int addDependent(String firstName, String lastName, String ssn, String dob, String relation, int userId) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
 
+        try {
+            // get the next available dependent id for this user
+            int dependentId = getNextDependentId(userId);
+
+            // populate the values for insertion
+            values.put(USER_ID, userId);
+            values.put(DEPENDENT_ID, dependentId);
+            values.put(DEPENDENT_FNAME, firstName);
+            values.put(DEPENDENT_LNAME, lastName);
+            values.put(DEPENDENT_SSN, ssn);
+            values.put(DEPENDENT_DOB, dob);
+            values.put(DEPENDENT_RELATION, relation);
+
+            // insert the dependent record
+            long result = db.insert(DEPENDENT_INFO_TABLE, null, values);
+
+            if (result == -1) {
+                Log.e(TAG, "Failed to add dependent for user: " + userId);
+                return -1;
+            }
+
+            Log.d(TAG, "Successfully added dependent " + dependentId + " for user " + userId);
+            return dependentId;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding dependent: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    @SuppressLint("Range")
+    public List<Map<String, String>> getUserDependents(int userId) {
+        SQLiteDatabase db = getReadableDatabase();
+        List<Map<String, String>> dependents = new ArrayList<>();
+
+        String[] columns = {
+                DEPENDENT_ID,
+                DEPENDENT_FNAME,
+                DEPENDENT_LNAME,
+                DEPENDENT_SSN,
+                DEPENDENT_DOB,
+                DEPENDENT_RELATION
+        };
+
+        String selection = USER_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(userId)};
+
+        Cursor cursor = db.query(DEPENDENT_INFO_TABLE, columns, selection, selectionArgs, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                Map<String, String> dependent = new HashMap<>();
+                dependent.put("id", cursor.getString(cursor.getColumnIndex(DEPENDENT_ID)));
+                dependent.put("firstName", cursor.getString(cursor.getColumnIndex(DEPENDENT_FNAME)));
+                dependent.put("lastName", cursor.getString(cursor.getColumnIndex(DEPENDENT_LNAME)));
+                dependent.put("ssn", cursor.getString(cursor.getColumnIndex(DEPENDENT_SSN)));
+                dependent.put("dob", cursor.getString(cursor.getColumnIndex(DEPENDENT_DOB)));
+                dependent.put("relation", cursor.getString(cursor.getColumnIndex(DEPENDENT_RELATION)));
+                dependents.add(dependent);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return dependents;
+    }
 
 }
