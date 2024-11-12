@@ -18,9 +18,9 @@ public class DependentsActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dependents);
 
-        String[] items = new String[] {"Relationship to Taxpayer","Father", "Mother", "Brother", "Sister"};
+        String[] items = new String[] {"Relationship to Taxpayer","Father", "Mother", "Brother", "Sister","Son","Daughter"};
         Spinner spinner = (Spinner) findViewById(R.id.spinner2);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, items);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
