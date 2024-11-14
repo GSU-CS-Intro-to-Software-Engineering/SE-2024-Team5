@@ -28,7 +28,7 @@ Clone the repository to your local machine.
 
 bash
 Copy code
-git clone https://github.com/username/IncomeTaxApp.git
+git clone https://github.com/GSU-CS-Intro-to-Software-Engineering/SE-2024-Team5.git
 Open the Project in Android Studio
 
 Open Android Studio and navigate to the project location to load the app.
