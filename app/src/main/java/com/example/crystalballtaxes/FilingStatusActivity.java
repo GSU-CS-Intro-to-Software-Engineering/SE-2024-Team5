@@ -1,5 +1,7 @@
 package com.example.crystalballtaxes;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -71,47 +73,49 @@ public class FilingStatusActivity extends AppCompatActivity {
                     Log.d("FilingStatusActivity", "HOH");
                 }
 
-                // get current Firebase user's email
-                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-                if (currentUser != null && currentUser.getEmail() != null) {
-                    String userEmail = currentUser.getEmail();
+                // first try to get userId from intent
+                long userId = getIntent().getLongExtra("USER_ID", -1);
 
-                    // get user ID from local database using email
-                    long userId = db.getUserIdFromEmail(userEmail);
-
-                    if (userId != -1) {
-                        if (!db.taxRecordExists(userId)) {
-                            long taxRecordId = db.initializeTaxRecord(userId);
-                            if (taxRecordId == -1) {
-                                Toast.makeText(FilingStatusActivity.this,
-                                        "Error initializing tax record", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                        }
-
-                        // update filing status
-                        boolean success = db.updateFilingStatus(userId, filingStatus);
-
-                        if (success) {
-                            // successfully saved to database
-                            Toast.makeText(FilingStatusActivity.this,
-                                    "Filing status saved", Toast.LENGTH_SHORT).show();
-
-                            // navigate to next screen
-                            Intent intent = new Intent(FilingStatusActivity.this,
-                                    DependentsActivity.class);
-                            intent.putExtra("USER_ID", userId);  // Pass the SQLite user ID
-                            startActivity(intent);
-                            finish();
-                        } else {
-                            // error saving to database
-                            Toast.makeText(FilingStatusActivity.this,
-                                    "Error saving filing status", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(FilingStatusActivity.this,
-                                "User not found in local database", Toast.LENGTH_SHORT).show();
+                // if not found in intent, try to get it from Firebase Auth
+                if (userId == -1) {
+                    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                    if (currentUser != null && currentUser.getEmail() != null) {
+                        userId = db.getUserIdFromEmail(currentUser.getEmail());
                     }
+                }
+
+                if (userId != -1) {
+                    if (!db.taxRecordExists(userId)) {
+                        long taxRecordId = db.initializeTaxRecord(userId);
+                        if (taxRecordId == -1) {
+                            Toast.makeText(FilingStatusActivity.this,
+                                    "Error initializing tax record", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+
+                    // update filing status
+                    boolean success = db.updateFilingStatus(userId, filingStatus);
+
+                    if (success) {
+                        Toast.makeText(FilingStatusActivity.this,
+                                "Filing status saved", Toast.LENGTH_SHORT).show();
+
+                        // navigate to next screen with userId
+                        Intent intent = new Intent(FilingStatusActivity.this,
+                                DependentsActivity.class);
+                        intent.putExtra("USER_ID", userId); // Pass the SQLite user ID
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        // error saving to database
+                        Toast.makeText(FilingStatusActivity.this,
+                                "Error saving filing status", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Log.e(TAG, "Could not determine user ID");
+                    Toast.makeText(FilingStatusActivity.this,
+                            "Error: User not found", Toast.LENGTH_SHORT).show();
                 }
             }
         });

@@ -20,10 +20,11 @@ import java.util.Map;
 * user_id(primary key), user_name, user_email, user_password(may use a hash), user_phone
 *
 * Tax table will have the following columns:
-* tax_info_id(primary key), user_id (foreign key), filing_status, income, (will add more as tax credits are added)
+* tax_info_id(primary key), user_id (foreign key), filing_status, income
 *
+*dependent table will have the following columns:
+* user_id (foreign key), dependent_id(primary key), dependent_first_name, dependent_last_name, dependent_ssn, dependent_dob, dependent_relation
 *
-* TODO add more comments as i have to go to work
 * */
 public class DatabaseHelper extends SQLiteOpenHelper{
 
