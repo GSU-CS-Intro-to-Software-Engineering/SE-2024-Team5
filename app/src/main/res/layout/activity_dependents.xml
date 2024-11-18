@@ -16,8 +16,8 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="94dp"
         android:layout_marginBottom="8dp"
-        android:text="I have no dependents"
         android:backgroundTint="#D30000"
+        android:text="I have no dependents"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,31 +42,9 @@
             android:layout_height="match_parent">
 
             <EditText
-                android:id="@+id/dependRelationTxtF"
-                android:layout_width="254dp"
-                android:layout_height="56dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="11dp"
-                android:background="@drawable/custom_cardview"
-                android:backgroundTint="@color/black"
-                android:ems="10"
-                android:fontFamily="@font/aoboshi_one"
-                android:hint="Relationship to Taxpayer"
-                android:inputType="text"
-                android:padding="8dp"
-                android:textColor="@color/white"
-                android:textColorHint="@color/white"
-                app:layout_constraintBottom_toTopOf="@+id/addDependBtn"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/dependDOBTxtF" />
-
-            <EditText
                 android:id="@+id/dependDOBTxtF"
                 android:layout_width="242dp"
                 android:layout_height="50dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="6dp"
                 android:background="@drawable/custom_cardview"
                 android:backgroundTint="@color/black"
                 android:ems="10"
@@ -76,17 +54,16 @@
                 android:padding="8dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/white"
-                app:layout_constraintBottom_toTopOf="@+id/dependRelationTxtF"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/dependSSNTxtF3" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.658" />
 
             <EditText
                 android:id="@+id/dependSSNTxtF3"
                 android:layout_width="242dp"
                 android:layout_height="50dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="21dp"
                 android:background="@drawable/custom_cardview"
                 android:backgroundTint="@color/black"
                 android:ems="10"
@@ -96,17 +73,17 @@
                 android:padding="8dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/white"
-                app:layout_constraintBottom_toTopOf="@+id/dependDOBTxtF"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/dependLastNameTxtF" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.5" />
 
             <EditText
                 android:id="@+id/dependLastNameTxtF"
                 android:layout_width="242dp"
                 android:layout_height="50dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="15dp"
                 android:background="@drawable/custom_cardview"
                 android:backgroundTint="@color/black"
                 android:ems="10"
@@ -116,33 +93,32 @@
                 android:padding="8dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/white"
-                app:layout_constraintBottom_toTopOf="@+id/dependSSNTxtF3"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.508"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/dependFirstNameTxtF" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.341" />
 
             <TextView
                 android:id="@+id/textView7"
                 android:layout_width="301dp"
                 android:layout_height="45dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="5dp"
                 android:fontFamily="@font/aoboshi_one"
                 android:text="Enter any dependents"
                 android:textAlignment="center"
                 android:textSize="28sp"
-                app:layout_constraintBottom_toTopOf="@+id/dependFirstNameTxtF"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.507"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.036" />
 
             <EditText
                 android:id="@+id/dependFirstNameTxtF"
                 android:layout_width="242dp"
                 android:layout_height="50dp"
-                android:layout_marginTop="13dp"
-                android:layout_marginBottom="15dp"
                 android:background="@drawable/custom_cardview"
                 android:backgroundTint="@color/black"
                 android:ems="10"
@@ -152,24 +128,36 @@
                 android:padding="8dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/white"
-                app:layout_constraintBottom_toTopOf="@+id/dependLastNameTxtF"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView7" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.185" />
 
             <Button
                 android:id="@+id/addDependBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:layout_marginBottom="13dp"
-                android:text="Add dependent"
                 android:backgroundTint="#1168BD"
+                android:text="Add dependent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <Spinner
+                android:id="@+id/spinner2"
+                android:layout_width="250dp"
+                android:layout_height="44dp"
+                android:backgroundTint="#C76060"
+                android:entries="@array/relationships"
+                android:background="@drawable/custom_cardview"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.534"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/dependRelationTxtF" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.81" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
