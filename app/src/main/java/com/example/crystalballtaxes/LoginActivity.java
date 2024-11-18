@@ -29,22 +29,19 @@ import com.google.firebase.auth.FirebaseUser;
 
 import com.example.crystalballtaxes.DatabaseHelper;
 
-//TODO  welcome user on signin
+
 
 public class LoginActivity extends AppCompatActivity {
-
     private EditText loginEmailInput, loginPassInput;
     private TextView forgetPass;
-    private Button loginBtn, signUpBtn, forgotPassBtn;
-    ProgressBar progressBar;
+    private Button loginBtn, signUpBtn;
+    private ProgressBar progressBar;
     private FirebaseAuth mAuth;
     private DatabaseHelper db;
 
-    //checks if user is already signed in also firebase template
     @Override
     public void onStart() {
         super.onStart();
-        // If user is already logged in then go to main activity
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -53,89 +50,113 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    //this ignores a false progress bar error
-    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        //initialize db
+
         db = new DatabaseHelper(this);
-
-        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
-        progressBar = findViewById(R.id.loginProgressBar);
-        progressBar.setVisibility(View.GONE);
 
+        progressBar = findViewById(R.id.loginProgressBar);
         loginEmailInput = findViewById(R.id.emailEditTxt);
         loginPassInput = findViewById(R.id.passwordEditTxt);
-
         forgetPass = findViewById(R.id.forgotPassTxt);
-
         loginBtn = findViewById(R.id.loginBtn);
         signUpBtn = findViewById(R.id.signUpBtn);
+
+        progressBar.setVisibility(View.GONE);
 
         loginBtn.setOnClickListener(view -> {
             progressBar.setVisibility(View.VISIBLE);
             signInUser();
         });
+
         signUpBtn.setOnClickListener(view -> {
             Intent i = new Intent(this, SignUpActivity.class);
             startActivity(i);
             finish();
         });
+
         forgetPass.setOnClickListener(view -> {
             forgotPassword();
         });
-
     }
 
     private void signInUser() {
-        String email = loginEmailInput.getText().toString();
-        String password = loginPassInput.getText().toString();
+        String email = loginEmailInput.getText().toString().trim();
+        String password = loginPassInput.getText().toString().trim();
+        long userID = db.getUserIdFromEmail(email);
 
         if (TextUtils.isEmpty(email)) {
             loginEmailInput.setError("Email cannot be empty");
             loginEmailInput.requestFocus();
+            progressBar.setVisibility(View.GONE);
+            return;
         } else if (TextUtils.isEmpty(password)) {
             loginPassInput.setError("Password cannot be empty");
             loginPassInput.requestFocus();
-            //authenticate with db before checking with firebase
-        } else // add null check to ensure the db is intialized
-            if (db != null && db.checkUser(email, password)) {
-                mAuth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+            progressBar.setVisibility(View.GONE);
+            return;
+        }
+
+        // First check SQLite
+        if (db != null && db.checkUser(email, password)) {
+            // If SQLite check passes, then verify with Firebase
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            progressBar.setVisibility(View.GONE);
+                            if (task.isSuccessful()) {
+                                // Both SQLite and Firebase authentication successful
+                                Toast.makeText(LoginActivity.this, "Login successful",
+                                        Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                intent.putExtra("userID", userID);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                // Firebase authentication failed
+                                Toast.makeText(LoginActivity.this,
+                                        "Firebase authentication failed: " + task.getException().getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        } else {
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(LoginActivity.this, "Invalid email or password",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void forgotPassword() {
+        String email = loginEmailInput.getText().toString().trim();
+        if (!TextUtils.isEmpty(email)) {
+            // Check if user exists in SQLite first
+            long userId = db.getUserIdFromEmail(email);
+            if (userId != -1) {
+                mAuth.sendPasswordResetEmail(email)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                progressBar.setVisibility(View.GONE);  // Hide progress bar after authentication
+                            public void onComplete(@NonNull Task<Void> task) {
                                 if (task.isSuccessful()) {
-                                    FirebaseUser user = mAuth.getCurrentUser();
-                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                    startActivity(intent);
-                                    finish();
+                                    Toast.makeText(LoginActivity.this,
+                                            "Password reset email sent", Toast.LENGTH_SHORT).show();
                                 } else {
-                                    Toast.makeText(LoginActivity.this, "Login Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(LoginActivity.this,
+                                            "Failed to send reset email", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         });
             } else {
-                progressBar.setVisibility(View.GONE);  // Hide progress bar if user doesn't exist
-                Toast.makeText(LoginActivity.this, "User does not exist", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this,
+                        "No account found with this email", Toast.LENGTH_SHORT).show();
             }
-    }
-
-
-    public void forgotPassword(){
-
-        String email = loginEmailInput.getText().toString();
-        mAuth.sendPasswordResetEmail(email)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "Email sent.");
-                        }
-                    }
-                });
+        } else {
+            loginEmailInput.setError("Enter email to reset password");
+            loginEmailInput.requestFocus();
+        }
     }
 }

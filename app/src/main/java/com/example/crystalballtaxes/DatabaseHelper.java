@@ -30,7 +30,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     //setting up for the databaseHelper constructor
     private static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "crystalBallTaxes.db";
-    static final int DATABASE_VERSION = 4;
+    static final int DATABASE_VERSION = 5;
 
     //initialize table names
     private static String USER_TABLE = "USERS";
@@ -56,7 +56,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     private static String ITEMIZED_DEDUCTIONS = "ITEMIZED_DEDUCTIONS";
     private static String DEPENDENTS = "DEPENDENTS";
 
-    //Initialize dependent table column names
+    //initialize dependent table column names
     private static String DEPENDENT_ID = "DEPENDENT_ID";
     private static String DEPENDENT_FNAME = "DEPENDENT_FIRST_NAME";
     private static String DEPENDENT_LNAME = "DEPENDENT_LAST_NAME";
@@ -122,19 +122,64 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     }
 
     //add user to the database
-    public long addUser(String name, String email, String password, String phone){
+    //modify addUser to prevent duplicate emails regardless of case
+    public long addUser(String name, String email, String password, String phone) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
+        long id = -1;
 
-        //add values to the table
-        values.put(USER_NAME, name);
-        values.put(USER_EMAIL, email);
-        values.put(USER_PASSWORD, password);
-        values.put(USER_PHONE, phone);
+        db.beginTransaction();
+        try {
+            // check for existing user with case insensitive email comparison
+            String query = "SELECT " + KEY_ID +
+                    " FROM " + USER_TABLE +
+                    " WHERE LOWER(" + USER_EMAIL + ") = LOWER(?)";
 
-        //insert row
-        long id = db.insert(USER_TABLE, null, values);
-        Log.d(TAG, "added User: " + id);
+            Cursor cursor = db.rawQuery(query, new String[]{email});
+
+            if (cursor != null && cursor.getCount() > 0) {
+                Log.e(TAG, "User with email " + email + " already exists (case-insensitive match)");
+                cursor.close();
+                return -1;
+            }
+            if (cursor != null) {
+                cursor.close();
+            }
+
+            ContentValues values = new ContentValues();
+            values.put(USER_NAME, name);
+            values.put(USER_EMAIL, email); // store original email case
+            values.put(USER_PASSWORD, password);
+            values.put(USER_PHONE, phone);
+
+            id = db.insert(USER_TABLE, null, values);
+
+            if (id != -1) {
+                // verify the insertion
+                Cursor verificationCursor = db.query(USER_TABLE,
+                        null,
+                        KEY_ID + "=?",
+                        new String[]{String.valueOf(id)},
+                        null, null, null);
+
+                if (verificationCursor != null && verificationCursor.moveToFirst()) {
+                    @SuppressLint("Range")
+                    String verifyEmail = verificationCursor.getString(verificationCursor.getColumnIndex(USER_EMAIL));
+                    Log.d(TAG, "Successfully added user: " + id + " with email: " + verifyEmail);
+                    verificationCursor.close();
+                    db.setTransactionSuccessful();
+                }
+            } else {
+                Log.e(TAG, "Failed to add user to database");
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding user: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        } finally {
+            db.endTransaction();
+        }
+
         return id;
     }
 
@@ -188,32 +233,141 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return user;
     }
 
+    //was previously assigning -1 to userID
+    //now is case insensitive when geting user id from email
+    //along with better logging
+    @SuppressLint("Range")
     public long getUserIdFromEmail(String userEmail) {
         SQLiteDatabase database = this.getReadableDatabase();
-        long userId = -1; //ensure return -1 if does not exist
+        long userId = -1;
 
-        Cursor cursor = database.query(
-                "USERS",  // table name
-                new String[]{"ID"},  // columns to return
-                "EMAIL = ?",  // selection criteria
-                new String[]{userEmail},  // selection arguments
-                null,  // group by
-                null,  // having
-                null   // order by
-        );
+        Log.d(TAG, "Attempting to get user ID for email: " + userEmail);
 
-        if (cursor != null && cursor.moveToFirst()) {
-            @SuppressLint("Range")
-            long id = cursor.getLong(cursor.getColumnIndex("ID"));
-            userId = id;
-            cursor.close();
+        try {
+            // use LOWER() function in SQLite to make case-insensitive comparison
+            String query = "SELECT " + KEY_ID + ", " + USER_EMAIL +
+                    " FROM " + USER_TABLE +
+                    " WHERE LOWER(" + USER_EMAIL + ") = LOWER(?)";
+
+            Cursor cursor = database.rawQuery(query, new String[]{userEmail});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                userId = cursor.getLong(cursor.getColumnIndex(KEY_ID));
+                String foundEmail = cursor.getString(cursor.getColumnIndex(USER_EMAIL));
+                Log.d(TAG, "Found user ID: " + userId + " for email: " + foundEmail);
+                cursor.close();
+            } else {
+                Log.e(TAG, "No user found for email: " + userEmail);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying user: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return userId;
     }
 
+    public boolean checkUser(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        boolean isValid = false;
+
+        try {
+            // use LOWER() function again
+            String query = "SELECT " + USER_EMAIL + ", " + USER_PASSWORD +
+                    " FROM " + USER_TABLE +
+                    " WHERE LOWER(" + USER_EMAIL + ") = LOWER(?)";
+
+            Cursor cursor = db.rawQuery(query, new String[]{email});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                @SuppressLint("Range")
+                String storedPassword = cursor.getString(cursor.getColumnIndex(USER_PASSWORD));
+                @SuppressLint("Range")
+                String storedEmail = cursor.getString(cursor.getColumnIndex(USER_EMAIL));
+
+                // password comparison remains case-sensitive
+                if (storedPassword.equals(password)) {
+                    isValid = true;
+                    Log.d(TAG, "User authenticated successfully for email: " + email);
+                } else {
+                    Log.d(TAG, "Password mismatch for email: " + email);
+                }
+                cursor.close();
+            } else {
+                Log.d(TAG, "No user found with email: " + email);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking user: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return isValid;
+    }
+
+    //helper method to check if the database is properly initialized
+    public boolean isDatabaseInitialized() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                    new String[]{USER_TABLE});
+            boolean exists = false;
+            if (cursor != null) {
+                exists = cursor.getCount() > 0;
+                cursor.close();
+            }
+            return exists;
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking database initialization: " + e.getMessage());
+            return false;
+        }
+    }
+
+    //get all users in the database to a List
+    //range suppress for get column index since it is possible for the db to not be initalized
+    // when calling the method which would throw an error
+    @SuppressLint("Range")
+    public List<Map<String, String>> getUserTable() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Map<String, String>> users = new ArrayList<>();
+
+        Cursor userCursor = db.query(USER_TABLE, null, null, null, null, null, null, null);
+
+        if (userCursor != null && userCursor.moveToFirst()) {
+            do {
+                Map<String, String> user = new HashMap<>();
+                user.put("id", userCursor.getString(userCursor.getColumnIndex(KEY_ID)));  // Changed from USER_ID
+                user.put("name", userCursor.getString(userCursor.getColumnIndex(USER_NAME)));
+                user.put("email", userCursor.getString(userCursor.getColumnIndex(USER_EMAIL)));
+                user.put("phone", userCursor.getString(userCursor.getColumnIndex(USER_PHONE)));
+                users.add(user);
+
+                // Detailed logging
+                Log.d(TAG, "Retrieved User: " +
+                        "\nID: " + user.get("id") +
+                        "\nName: " + user.get("name") +
+                        "\nEmail: " + user.get("email") +
+                        "\nPhone: " + user.get("phone"));
+            } while (userCursor.moveToNext());
+        } else {
+            Log.d(TAG, "No users found in database");
+        }
+
+        if (userCursor != null) {
+            userCursor.close();
+        }
+        return users;
+    }
+
     //tax table operations
+
+    //initalize the record but forgot to check if it existed initally last time
     public long initializeTaxRecord(long userId) {
+        //the check
+        if (taxRecordExists(userId)) {
+            Log.d(TAG, "Tax record already exists for user: " + userId);
+            return -1;
+        }
+
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -229,10 +383,12 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return id;
     }
 
+
+    //rewrote to work off tax info id instead of user id when inserting
     public boolean taxRecordExists(long userId) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(TAX_INFO_TABLE,
-                new String[]{USER_ID},
+                new String[]{TAX_INFO_ID},
                 USER_ID + "=?",
                 new String[]{String.valueOf(userId)},
                 null, null, null);
@@ -241,8 +397,9 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         if (cursor != null) {
             cursor.close();
         }
-        //had a warning saying it needs to be inverted
-        return !exists;
+
+        Log.d(TAG, "Tax record exists for user " + userId + ": " + exists);
+        return exists;
     }
 
     @SuppressLint("Range")
@@ -287,18 +444,57 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return taxRecords;
     }
 
+    //rewrote to handle errors better
+    @SuppressLint("Range")
     public boolean updateFilingStatus(long userId, String filingStatus) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(FILING_STATUS, filingStatus);
 
-        int rowsAffected = db.update(TAX_INFO_TABLE,
-                values,
+        // check if tax record exits
+        Cursor cursor = db.query(TAX_INFO_TABLE,
+                new String[]{TAX_INFO_ID},
                 USER_ID + "=?",
-                new String[]{String.valueOf(userId)});
+                new String[]{String.valueOf(userId)},
+                null, null, null);
 
-        Log.d(TAG, "Updated filing status for user " + userId + ": " + filingStatus);
-        return rowsAffected > 0;
+        boolean success = false;
+
+        if (cursor != null && cursor.moveToFirst()) {
+            // get the tax_info_id for this user
+            long taxInfoId = cursor.getLong(cursor.getColumnIndex(TAX_INFO_ID));
+
+            // update using tax_info_id instead of user_id
+            int rowsAffected = db.update(TAX_INFO_TABLE,
+                    values,
+                    TAX_INFO_ID + "=?",
+                    new String[]{String.valueOf(taxInfoId)});
+
+            success = rowsAffected > 0;
+
+            Log.d(TAG, "Attempted to update filing status for user " + userId +
+                    " (Tax Info ID: " + taxInfoId + "): " + filingStatus +
+                    " - Success: " + success);
+
+            //check to see if it was updated
+            Cursor verificationCursor = db.query(TAX_INFO_TABLE,
+                    new String[]{FILING_STATUS},
+                    TAX_INFO_ID + "=?",
+                    new String[]{String.valueOf(taxInfoId)},
+                    null, null, null);
+
+            if (verificationCursor != null && verificationCursor.moveToFirst()) {
+                String updatedStatus = verificationCursor.getString(verificationCursor.getColumnIndex(FILING_STATUS));
+                Log.d(TAG, "Verified filing status after update: " + updatedStatus);
+                verificationCursor.close();
+            }
+
+            cursor.close();
+        } else {
+            Log.e(TAG, "No tax record found for user ID: " + userId);
+        }
+
+        return success;
     }
 
     public boolean updateIncome(long userId, String income) {
@@ -380,63 +576,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
         return taxInfo;
     }
-
-    //get all users in the database
-    //range suppress for get column index since it is possible for the db to not be initalized
-    // when calling the method which would throw an error
-    @SuppressLint("Range")
-    public List<Map<String, String>> getUserTable() {
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<Map<String, String>> users = new ArrayList<>();
-
-        Cursor userCursor = db.query(USER_TABLE, null, null, null, null, null, null, null);
-
-        if (userCursor != null && userCursor.moveToFirst()) {
-            do {
-                Map<String, String> user = new HashMap<>();
-                user.put("id", userCursor.getString(userCursor.getColumnIndex(USER_ID)));
-                user.put("name", userCursor.getString(userCursor.getColumnIndex(USER_NAME)));
-                user.put("email", userCursor.getString(userCursor.getColumnIndex(USER_EMAIL)));
-                user.put("phone", userCursor.getString(userCursor.getColumnIndex(USER_PHONE)));
-                users.add(user);
-
-                // Keep logging for debugging purposes
-                Log.d(TAG, "User: " +
-                        "\nID: " + user.get("id") +
-                        "\nName: " + user.get("name") +
-                        "\nEmail: " + user.get("email") +
-                        "\nPhone: " + user.get("phone"));
-            } while (userCursor.moveToNext());
-        }
-
-        if (userCursor != null) {
-            userCursor.close();
-        }
-
-        return users;
-    }
-
-    public boolean checkUser(String email, String password){
-        SQLiteDatabase db = this.getReadableDatabase();
-        String[] columns = {USER_EMAIL, USER_PASSWORD};
-        String selection = USER_EMAIL + " = ?";
-        String[] selectionArgs = {email};
-
-        Cursor cursor = db.query(USER_TABLE, columns, selection, selectionArgs, null, null, null);
-
-        if(cursor != null && cursor.moveToFirst()){
-            @SuppressLint("Range") String storedPassword = cursor.getString(cursor.getColumnIndex(USER_PASSWORD));
-            @SuppressLint("Range") String storedEmail = cursor.getString(cursor.getColumnIndex(USER_EMAIL));
-
-            if(storedPassword.equals(password) && storedEmail.equals(email)) {
-                cursor.close();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /*
     * this will allow the primary key of dependents to find the next available int
     * for the dependents using the user id

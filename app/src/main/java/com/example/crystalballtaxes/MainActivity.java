@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
-
+import com.example.crystalballtaxes.DatabaseHelper;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -23,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         db = new DatabaseHelper(this);
+        Intent intent = getIntent();
+        long userID = intent.getLongExtra("userID", -1);
 
         Button logoutBtn = findViewById(R.id.logoutBtn);
         logoutBtn.setOnClickListener(view -> {
@@ -35,7 +37,10 @@ public class MainActivity extends AppCompatActivity {
         Button startBtn = findViewById(R.id.startBtn);
         try {
             startBtn.setOnClickListener(view -> {
+                Log.d("MainActivity", "Starting FilingStatusActivity");
+                db.initializeTaxRecord(userID);
                 Intent i = new Intent(this, FilingStatusActivity.class);
+                i.putExtra("userID", userID);
                 startActivity(i);
             });
         }catch (Exception e){
@@ -51,49 +56,6 @@ public class MainActivity extends AppCompatActivity {
             Log.e("MainActivity", "Error starting DatabaseManagerGuiActivity", e);
         }
 
-
-    }
-
-    private void initializeTaxRecord() {
-        // get current Firebase user's email
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null && currentUser.getEmail() != null) {
-            String userEmail = currentUser.getEmail();
-
-            // get user ID from local database using email
-            long userId = getUserIdFromEmail(userEmail);
-
-            if (userId != -1) {
-                // check if tax record already exists
-                if (db.taxRecordExists(userId)) {
-                    // initialize tax record if it doesn't exist
-                    long taxRecordId = db.initializeTaxRecord(userId);
-                    if (taxRecordId != -1) {
-                        Log.d("MainActivity", "Tax record initialized successfully");
-                    } else {
-                        Log.e("MainActivity", "Failed to initialize tax record");
-                        Toast.makeText(this, "Error initializing tax record", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                }
-
-                // switch activities
-                //put extra allows for a variable to be passed between activities
-                //will allow for userID to be passed to each step of the process
-                Intent i = new Intent(this, FilingStatusActivity.class);
-                i.putExtra("USER_ID", userId);
-                startActivity(i);
-            } else {
-                Log.e("MainActivity", "User not found in local database");
-                Toast.makeText(this, "User not found in local database", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Log.e("MainActivity", "No user currently logged in");
-            Toast.makeText(this, "Please log in first", Toast.LENGTH_SHORT).show();
-            Intent i = new Intent(this, LoginActivity.class);
-            startActivity(i);
-            finish();
-        }
     }
 
     private long getUserIdFromEmail(String email) {
