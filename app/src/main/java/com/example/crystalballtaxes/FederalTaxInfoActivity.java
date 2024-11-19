@@ -80,13 +80,10 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
     private void loadExistingTaxInfo() {
         Map<String, String> taxInfo = db.getUserTaxInfo(userId);
 
-        if (!taxInfo.isEmpty()) {
-            try {
-                // set existing values if they exist
-                if (taxInfo.get("income") != null) {
-                    double income = Double.parseDouble(taxInfo.get("income"));
-                    annualIncomeInput.setText(currencyFormatter.format(income));
-                }
+        try {
+            double income = taxInfo.get("income") != null ? Double.parseDouble(taxInfo.get("income")) : 0;
+            if (income != 0) {
+                annualIncomeInput.setText(currencyFormatter.format(income));
 
                 if (taxInfo.get("tax_credits") != null) {
                     double credits = Double.parseDouble(taxInfo.get("tax_credits"));
@@ -102,9 +99,9 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
                     double itemized = Double.parseDouble(taxInfo.get("itemized_deductions"));
                     itemizedDeductionsInput.setText(currencyFormatter.format(itemized));
                 }
-            } catch (NumberFormatException e) {
-                Log.e(TAG, "Error parsing existing tax info: " + e.getMessage());
             }
+        } catch (NumberFormatException e) {
+            Log.e(TAG, "Error parsing existing tax info: " + e.getMessage());
         }
     }
 
@@ -112,6 +109,7 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
     private void setupCurrencyFormatting() {
         TextWatcher currencyWatcher = new TextWatcher() {
             private boolean isUpdating = false;
+            private String previousCleanString = "";
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -123,27 +121,38 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {
                 if (isUpdating) return;
 
-                if (!TextUtils.isEmpty(s)) {
-                    isUpdating = true;
-                    String str = s.toString();
-                    // remove all formatting characters
-                    String cleanString = str.replaceAll("[$,.]", "");
+                String str = s.toString();
+                String cleanString = str.replaceAll("[$,.]", "");
 
-                    try {
-                        double parsed = Double.parseDouble(cleanString);
-                        // convert to dollars
-                        if (cleanString.length() > 2) {
-                            parsed = parsed / 100.0;
-                        } else {
-                            parsed = parsed / 100.0;
-                        }
-                        String formatted = currencyFormatter.format(parsed);
-                        s.replace(0, s.length(), formatted);
-                    } catch (NumberFormatException e) {
-                        Log.e(TAG, "Error formatting currency: " + e.getMessage());
-                    }
-                    isUpdating = false;
+                // dont format if user hasn't started entering numbers
+                if (str.equals("Annual Income") || str.equals("Total Tax Credits") ||
+                        str.equals("Above the line Deductions") || str.equals("Itemized Deductions") ||
+                        cleanString.isEmpty()) {
+                    return;
                 }
+
+                // pnly format if the clean string is different
+                if (cleanString.equals(previousCleanString)) {
+                    return;
+                }
+
+                isUpdating = true;
+                previousCleanString = cleanString;
+
+                try {
+                    double parsed = Double.parseDouble(cleanString);
+                    if (cleanString.length() > 2) {
+                        parsed = parsed / 100.0;
+                    } else {
+                        parsed = parsed / 100.0;
+                    }
+                    String formatted = currencyFormatter.format(parsed);
+                    s.replace(0, s.length(), formatted);
+                } catch (NumberFormatException e) {
+                    Log.e(TAG, "Error formatting currency: " + e.getMessage());
+                }
+
+                isUpdating = false;
             }
         };
 
