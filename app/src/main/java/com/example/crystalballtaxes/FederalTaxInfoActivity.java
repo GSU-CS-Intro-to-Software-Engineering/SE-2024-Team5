@@ -6,7 +6,6 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -58,13 +57,10 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
         setupCurrencyFormatting();
 
         // set up calculate button
-        calculateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (validateInputs()) {
-                    saveTaxInfo();
-                    goToTaxResults();
-                }
+        calculateButton.setOnClickListener(v -> {
+            if (validateInputs()) {
+                saveTaxInfo();
+                goToTaxResults();
             }
         });
     }
@@ -124,14 +120,14 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
                 String str = s.toString();
                 String cleanString = str.replaceAll("[$,.]", "");
 
-                // dont format if user hasn't started entering numbers
+                // don't format if user hasn't started entering numbers
                 if (str.equals("Annual Income") || str.equals("Total Tax Credits") ||
                         str.equals("Above the line Deductions") || str.equals("Itemized Deductions") ||
                         cleanString.isEmpty()) {
                     return;
                 }
 
-                // pnly format if the clean string is different
+                // only format if the clean string is different
                 if (cleanString.equals(previousCleanString)) {
                     return;
                 }
@@ -141,11 +137,7 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
 
                 try {
                     double parsed = Double.parseDouble(cleanString);
-                    if (cleanString.length() > 2) {
-                        parsed = parsed / 100.0;
-                    } else {
-                        parsed = parsed / 100.0;
-                    }
+                    parsed = parsed / 100.0;
                     String formatted = currencyFormatter.format(parsed);
                     s.replace(0, s.length(), formatted);
                 } catch (NumberFormatException e) {

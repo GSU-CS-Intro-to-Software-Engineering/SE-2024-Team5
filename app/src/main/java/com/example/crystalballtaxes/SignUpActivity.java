@@ -10,19 +10,15 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.example.crystalballtaxes.DatabaseHelper;
+
+import java.util.Objects;
 
 public class SignUpActivity extends AppCompatActivity {
     private EditText nameTxtF, emailTxtF, passwordTxtF, phoneTxtF;
-    private Button createAccBtn, backBtn;
     private ProgressBar signUpProgressBar;
     private FirebaseAuth mAuth;
     private DatabaseHelper db;
@@ -40,7 +36,7 @@ public class SignUpActivity extends AppCompatActivity {
         passwordTxtF = findViewById(R.id.newAccPasswrd);
         phoneTxtF = findViewById(R.id.newAccPhoneNum);
         signUpProgressBar = findViewById(R.id.signUpProgressBar);
-        createAccBtn = findViewById(R.id.createNewAccBtn);
+        Button createAccBtn = findViewById(R.id.createNewAccBtn);
 
         signUpProgressBar.setVisibility(View.INVISIBLE);
 
@@ -73,45 +69,42 @@ public class SignUpActivity extends AppCompatActivity {
 
         //firebase authentication
         mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // add to SQLite with logging
-                            Log.d("SignUpActivity", "Firebase auth successful, adding to SQLite...");
-                            long userId = db.addUser(name, email, password, phone);
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // add to SQLite with logging
+                        Log.d("SignUpActivity", "Firebase auth successful, adding to SQLite...");
+                        long userId = db.addUser(name, email, password, phone);
 
-                            if (userId != -1) {
-                                Log.d("SignUpActivity", "Successfully added user to SQLite with ID: " + userId);
+                        if (userId != -1) {
+                            Log.d("SignUpActivity", "Successfully added user to SQLite with ID: " + userId);
 
-                                // verify user was added
-                                long verifyId = db.getUserIdFromEmail(email);
-                                if (verifyId != -1) {
-                                    Log.d("SignUpActivity", "Verified user exists in SQLite with ID: " + verifyId);
+                            // verify user was added
+                            long verifyId = db.getUserIdFromEmail(email);
+                            if (verifyId != -1) {
+                                Log.d("SignUpActivity", "Verified user exists in SQLite with ID: " + verifyId);
 
-                                    // initialize tax record
-                                    long taxRecordId = db.initializeTaxRecord(userId);
-                                    Log.d("SignUpActivity", "Initialized tax record: " + taxRecordId);
+                                // initialize tax record
+                                long taxRecordId = db.initializeTaxRecord(userId);
+                                Log.d("SignUpActivity", "Initialized tax record: " + taxRecordId);
 
-                                    Toast.makeText(SignUpActivity.this,
-                                            "User registered successfully", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SignUpActivity.this,
+                                        "User registered successfully", Toast.LENGTH_SHORT).show();
 
-                                    Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
-                                    intent.putExtra("userID", userId);
-                                    startActivity(intent);
-                                    finish();
-                                } else {
-                                    Log.e("SignUpActivity", "User added but verification failed!");
-                                    handleRegistrationError("Database verification failed");
-                                }
+                                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+                                intent.putExtra("userID", userId);
+                                startActivity(intent);
+                                finish();
                             } else {
-                                handleRegistrationError("Failed to create local user record");
+                                Log.e("SignUpActivity", "User added but verification failed!");
+                                handleRegistrationError("Database verification failed");
                             }
                         } else {
-                            handleRegistrationError(task.getException().getMessage());
+                            handleRegistrationError("Failed to create local user record");
                         }
-                        signUpProgressBar.setVisibility(View.INVISIBLE);
+                    } else {
+                        handleRegistrationError(Objects.requireNonNull(task.getException()).getMessage());
                     }
+                    signUpProgressBar.setVisibility(View.INVISIBLE);
                 });
     }
 

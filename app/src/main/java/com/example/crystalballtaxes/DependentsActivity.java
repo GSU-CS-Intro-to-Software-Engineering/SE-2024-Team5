@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,7 +19,6 @@ public class DependentsActivity extends AppCompatActivity {
     private DatabaseHelper db;
     private EditText firstNameInput, lastNameInput, ssnInput, dobInput;
     private Spinner relationshipSpinner;
-    private Button addDependentBtn, noDependentsBtn;
     private int userId = -1;
 
     @Override
@@ -46,8 +44,8 @@ public class DependentsActivity extends AppCompatActivity {
         ssnInput = findViewById(R.id.dependSSNTxtF3);
         dobInput = findViewById(R.id.dependDOBTxtF);
         relationshipSpinner = findViewById(R.id.spinner2);
-        addDependentBtn = findViewById(R.id.addDependBtn);
-        noDependentsBtn = findViewById(R.id.button);
+        Button addDependentBtn = findViewById(R.id.addDependBtn);
+        Button noDependentsBtn = findViewById(R.id.button);
 
         // set up the spinner with relationship options
         String[] relationships = new String[]{
@@ -65,19 +63,9 @@ public class DependentsActivity extends AppCompatActivity {
         relationshipSpinner.setAdapter(adapter);
 
         // set up button click listeners
-        addDependentBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addDependent();
-            }
-        });
+        addDependentBtn.setOnClickListener(v -> addDependent());
 
-        noDependentsBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                proceedToNextScreen();
-            }
-        });
+        noDependentsBtn.setOnClickListener(v -> proceedToNextScreen());
     }
 
     private void addDependent() {

@@ -9,9 +9,7 @@ import android.util.Log;
 import android.database.Cursor;
 
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /*
@@ -31,39 +29,39 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     //setting up for the databaseHelper constructor
     private static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "crystalBallTaxes.db";
-    static final int DATABASE_VERSION = 5;
+    static final int DATABASE_VERSION = 7;
 
     //initialize table names
-    private static String USER_TABLE = "USERS";
-    private static String TAX_INFO_TABLE = "TAX_INFO";
-    private static String DEPENDENT_INFO_TABLE = "DEPENDENTS";
+    private static final String USER_TABLE = "USERS";
+    private static final String TAX_INFO_TABLE = "TAX_INFO";
+    private static final String DEPENDENT_INFO_TABLE = "DEPENDENTS";
 
     //initialize id column since both tables use it
-    private static String KEY_ID = "ID";
+    private static final String KEY_ID = "ID";
 
     //initialize user table column names
-    private static String USER_NAME = "NAME";
-    private static String USER_EMAIL = "EMAIL";
-    private static String USER_PASSWORD = "PASSWORD";
-    private static String USER_PHONE = "PHONE";
+    private static final String USER_NAME = "NAME";
+    private static final String USER_EMAIL = "EMAIL";
+    private static final String USER_PASSWORD = "PASSWORD";
+    private static final String USER_PHONE = "PHONE";
 
     //initialize tax table column names
-    private static String TAX_INFO_ID = "TAX_INFO_ID";
-    private static String USER_ID = "USER_ID";
-    private static String FILING_STATUS = "FILING_STATUS";
-    private static String INCOME = "INCOME";
-    private static String TAX_CREDITS = "TAX_CREDITS";
-    private static String ABOVE_LINE_DEDUCTIONS = "ABOVE_LINE_DEDUCTIONS";
-    private static String ITEMIZED_DEDUCTIONS = "ITEMIZED_DEDUCTIONS";
-    private static String DEPENDENTS = "DEPENDENTS";
+    private static final String TAX_INFO_ID = "TAX_INFO_ID";
+    private static final String USER_ID = "USER_ID";
+    private static final String FILING_STATUS = "FILING_STATUS";
+    private static final String INCOME = "INCOME";
+    private static final String TAX_CREDITS = "TAX_CREDITS";
+    private static final String ABOVE_LINE_DEDUCTIONS = "ABOVE_LINE_DEDUCTIONS";
+    private static final String ITEMIZED_DEDUCTIONS = "ITEMIZED_DEDUCTIONS";
+
 
     //initialize dependent table column names
-    private static String DEPENDENT_ID = "DEPENDENT_ID";
-    private static String DEPENDENT_FNAME = "DEPENDENT_FIRST_NAME";
-    private static String DEPENDENT_LNAME = "DEPENDENT_LAST_NAME";
-    private static String DEPENDENT_SSN = "DEPENDENT_SSN";
-    private static String DEPENDENT_DOB = "DEPENDENT_DOB";
-    private static String DEPENDENT_RELATION = "DEPENDENT_RELATION";
+    private static final String DEPENDENT_ID = "DEPENDENT_ID";
+    private static final String DEPENDENT_FNAME = "DEPENDENT_FIRST_NAME";
+    private static final String DEPENDENT_LNAME = "DEPENDENT_LAST_NAME";
+    private static final String DEPENDENT_SSN = "DEPENDENT_SSN";
+    private static final String DEPENDENT_DOB = "DEPENDENT_DOB";
+    private static final String DEPENDENT_RELATION = "DEPENDENT_RELATION";
 
     //string query for creating the user table
     private static final String CREATE_USER_TABLE = "CREATE TABLE " + USER_TABLE + "(" +
@@ -83,7 +81,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             TAX_CREDITS + " TEXT," +
             ABOVE_LINE_DEDUCTIONS + " TEXT," +
             ITEMIZED_DEDUCTIONS + " TEXT," +
-            DEPENDENTS + " TEXT," +
             "FOREIGN KEY (" + USER_ID + ") REFERENCES " + USER_TABLE + "(" + KEY_ID + ")" +
             ")";
 
@@ -126,7 +123,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     //modify addUser to prevent duplicate emails regardless of case
     public long addUser(String name, String email, String password, String phone) {
         SQLiteDatabase db = this.getWritableDatabase();
-        long id = -1;
+        long id;
 
         db.beginTransaction();
         try {
@@ -184,56 +181,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         return id;
     }
 
-    public boolean updateUser(long id, String name, String email, String password, String phone){
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-
-        //add values to the table
-        values.put(USER_NAME, name);
-        values.put(USER_EMAIL, email);
-        values.put(USER_PASSWORD, password);
-        values.put(USER_PHONE, phone);
-
-        //update row and return true if any changes are made
-        int rowsAffected = db.update(USER_TABLE, values, KEY_ID + "=" + id, null);
-        Log.d(TAG, "updated User: " + rowsAffected);
-        return rowsAffected > 0;
-    }
-
-    public boolean deleteUser(long id){
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        //delete row same as updateUser method
-        int rowsAffected = db.delete(USER_TABLE, KEY_ID + "=" + id, null);
-        Log.d(TAG, "deleted User: " + rowsAffected);
-        return rowsAffected > 0;
-    }
-
-    //prints the user table to logcat with tag of DatabaseHelper
-    public String[] getUser(long id){
-        SQLiteDatabase db = this.getReadableDatabase();
-        String[] user = new String[4];
-        //set up a cursor pointer to start reading the table from the beginning
-        Cursor cursor = db.query(USER_TABLE, new String[]{KEY_ID, USER_NAME, USER_EMAIL, USER_PASSWORD, USER_PHONE}, KEY_ID + "=?",
-                new String[]{String.valueOf(id)}, null, null, null);
-
-        if (cursor != null && cursor.moveToFirst()){
-            Log.d(TAG, "id: " + cursor.getString(0)
-                    + " name: " + cursor.getString(1)
-                    + " email: " + cursor.getString(2));
-            user[0] = cursor.getString(1); //name
-            user[1] = cursor.getString(2); //email
-            user[2] = cursor.getString(3); //password
-            user[3] = cursor.getString(4); //phone
-        } else {
-            Log.d(TAG, "no user found with id " + id);
-        }
-        if (cursor != null){
-            cursor.close();
-        }
-        return user;
-    }
-
     //was previously assigning -1 to userID
     //now is case insensitive when geting user id from email
     //along with better logging
@@ -283,8 +230,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             if (cursor != null && cursor.moveToFirst()) {
                 @SuppressLint("Range")
                 String storedPassword = cursor.getString(cursor.getColumnIndex(USER_PASSWORD));
-                @SuppressLint("Range")
-                String storedEmail = cursor.getString(cursor.getColumnIndex(USER_EMAIL));
+
 
                 // password comparison remains case-sensitive
                 if (storedPassword.equals(password)) {
@@ -321,42 +267,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             Log.e(TAG, "Error checking database initialization: " + e.getMessage());
             return false;
         }
-    }
-
-    //get all users in the database to a List
-    //range suppress for get column index since it is possible for the db to not be initalized
-    // when calling the method which would throw an error
-    @SuppressLint("Range")
-    public List<Map<String, String>> getUserTable() {
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<Map<String, String>> users = new ArrayList<>();
-
-        Cursor userCursor = db.query(USER_TABLE, null, null, null, null, null, null, null);
-
-        if (userCursor != null && userCursor.moveToFirst()) {
-            do {
-                Map<String, String> user = new HashMap<>();
-                user.put("id", userCursor.getString(userCursor.getColumnIndex(KEY_ID)));  // Changed from USER_ID
-                user.put("name", userCursor.getString(userCursor.getColumnIndex(USER_NAME)));
-                user.put("email", userCursor.getString(userCursor.getColumnIndex(USER_EMAIL)));
-                user.put("phone", userCursor.getString(userCursor.getColumnIndex(USER_PHONE)));
-                users.add(user);
-
-                // Detailed logging
-                Log.d(TAG, "Retrieved User: " +
-                        "\nID: " + user.get("id") +
-                        "\nName: " + user.get("name") +
-                        "\nEmail: " + user.get("email") +
-                        "\nPhone: " + user.get("phone"));
-            } while (userCursor.moveToNext());
-        } else {
-            Log.d(TAG, "No users found in database");
-        }
-
-        if (userCursor != null) {
-            userCursor.close();
-        }
-        return users;
     }
 
     //tax table operations
@@ -401,48 +311,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
         Log.d(TAG, "Tax record exists for user " + userId + ": " + exists);
         return exists;
-    }
-
-    @SuppressLint("Range")
-    public List<Map<String, String>> getTaxTable() {
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<Map<String, String>> taxRecords = new ArrayList<>();
-
-        Cursor taxCursor = db.query(TAX_INFO_TABLE, null, null, null, null, null, null, null);
-
-        if (taxCursor != null && taxCursor.moveToFirst()) {
-            do {
-                Map<String, String> taxInfo = new HashMap<>();
-                taxInfo.put("tax_info_id", taxCursor.getString(taxCursor.getColumnIndex(TAX_INFO_ID)));
-                taxInfo.put("income", taxCursor.getString(taxCursor.getColumnIndex(INCOME)));
-                taxInfo.put("filing_status", taxCursor.getString(taxCursor.getColumnIndex(FILING_STATUS)));
-                taxInfo.put("user_id", taxCursor.getString(taxCursor.getColumnIndex(USER_ID)));
-                taxInfo.put("tax_credits", taxCursor.getString(taxCursor.getColumnIndex(TAX_CREDITS)));
-                taxInfo.put("above_line_deductions", taxCursor.getString(taxCursor.getColumnIndex(ABOVE_LINE_DEDUCTIONS)));
-                taxInfo.put("itemized_deductions", taxCursor.getString(taxCursor.getColumnIndex(ITEMIZED_DEDUCTIONS)));
-                taxInfo.put("dependents", taxCursor.getString(taxCursor.getColumnIndex(DEPENDENTS)));
-
-                taxRecords.add(taxInfo);
-
-                //log for debugging
-                Log.d(TAG, "Tax Info: " +
-                        "\nTax Info ID: " + taxInfo.get("tax_info_id") +
-                        "\nIncome: " + taxInfo.get("income") +
-                        "\nFiling Status: " + taxInfo.get("filing_status") +
-                        "\nCustomer ID: " + taxInfo.get("user_id") +
-                        "\nTax Credits: " + taxInfo.get("tax_credits") +
-                        "\nAbove Line Deductions: " + taxInfo.get("above_line_deductions") +
-                        "\nItemized Deductions: " + taxInfo.get("itemized_deductions") +
-                        "\nDependents: " + taxInfo.get("dependents"));
-
-            } while (taxCursor.moveToNext());
-        }
-
-        if (taxCursor != null) {
-            taxCursor.close();
-        }
-
-        return taxRecords;
     }
 
     //rewrote to handle errors better
@@ -624,42 +492,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             Log.e(TAG, "Error adding dependent: " + e.getMessage());
             return -1;
         }
-    }
-
-    @SuppressLint("Range")
-    public List<Map<String, String>> getUserDependents(int userId) {
-        SQLiteDatabase db = getReadableDatabase();
-        List<Map<String, String>> dependents = new ArrayList<>();
-
-        String[] columns = {
-                DEPENDENT_ID,
-                DEPENDENT_FNAME,
-                DEPENDENT_LNAME,
-                DEPENDENT_SSN,
-                DEPENDENT_DOB,
-                DEPENDENT_RELATION
-        };
-
-        String selection = USER_ID + " = ?";
-        String[] selectionArgs = {String.valueOf(userId)};
-
-        Cursor cursor = db.query(DEPENDENT_INFO_TABLE, columns, selection, selectionArgs, null, null, null);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                Map<String, String> dependent = new HashMap<>();
-                dependent.put("id", cursor.getString(cursor.getColumnIndex(DEPENDENT_ID)));
-                dependent.put("firstName", cursor.getString(cursor.getColumnIndex(DEPENDENT_FNAME)));
-                dependent.put("lastName", cursor.getString(cursor.getColumnIndex(DEPENDENT_LNAME)));
-                dependent.put("ssn", cursor.getString(cursor.getColumnIndex(DEPENDENT_SSN)));
-                dependent.put("dob", cursor.getString(cursor.getColumnIndex(DEPENDENT_DOB)));
-                dependent.put("relation", cursor.getString(cursor.getColumnIndex(DEPENDENT_RELATION)));
-                dependents.add(dependent);
-            } while (cursor.moveToNext());
-            cursor.close();
-        }
-
-        return dependents;
     }
 
 }

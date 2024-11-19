@@ -1,5 +1,6 @@
 package com.example.crystalballtaxes;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,7 +16,6 @@ public class TaxResultsActivity extends AppCompatActivity {
     private static final String TAG = "TaxResultsActivity";
     private DatabaseHelper db;
     private TextView agiTextView, taxableIncomeTextView, grossTaxLiabilityTextView, taxesDueTextView;
-    private Button saveButton, homeButton;
     private long userId;
     private NumberFormat currencyFormatter;
 
@@ -28,8 +28,8 @@ public class TaxResultsActivity extends AppCompatActivity {
         taxableIncomeTextView = findViewById(R.id.taxableIncTxt);
         grossTaxLiabilityTextView = findViewById(R.id.grossTaxLibTxt);
         taxesDueTextView = findViewById(R.id.taxesDueTxt);
-        saveButton = findViewById(R.id.saveTaxInfoBtn);
-        homeButton = findViewById(R.id.backToHomeBtn);
+        Button saveButton = findViewById(R.id.saveTaxInfoBtn);
+        Button homeButton = findViewById(R.id.backToHomeBtn);
 
         currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US);
         db = new DatabaseHelper(this);
@@ -43,9 +43,7 @@ public class TaxResultsActivity extends AppCompatActivity {
             return;
         }
 
-        saveButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Tax results saved", Toast.LENGTH_SHORT).show();
-        });
+        saveButton.setOnClickListener(v -> Toast.makeText(this, "Tax results saved", Toast.LENGTH_SHORT).show());
 
         homeButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
@@ -56,6 +54,7 @@ public class TaxResultsActivity extends AppCompatActivity {
         calculateAndDisplayTaxes();
     }
 
+    @SuppressLint("SetTextI18n")
     private void calculateAndDisplayTaxes() {
         Map<String, String> taxInfo = db.getUserTaxInfo(userId);
         if (taxInfo.isEmpty()) {
@@ -75,6 +74,7 @@ public class TaxResultsActivity extends AppCompatActivity {
             double agi = income - aboveLineDeductions;
 
             // determine standard deduction based on filing status
+            assert filingStatus != null;
             double standardDeduction = getStandardDeduction(filingStatus);
 
             // use greater of itemized or standard deduction
@@ -102,7 +102,7 @@ public class TaxResultsActivity extends AppCompatActivity {
 
     private double getStandardDeduction(String filingStatus) {
         // 2023 standard deduction amounts
-        //single and married filed separately are the saem amount which is why there is no break for single
+        //single and married filed separately are the same amount which is why there is no break for single
         switch (filingStatus) {
             case "Married Filing Jointly":
                 return 27700.0;
@@ -120,7 +120,7 @@ public class TaxResultsActivity extends AppCompatActivity {
         double tax = 0;
 
         /*math.min/.max is allow for tax bracket upper limit to not be exceeded
-        * ex. if income is 30k and theyre single it would tax the first 19k at 12% and the rest at 10%
+        * ex. if income is 30k and they're single it would tax the first 19k at 12% and the rest at 10%
         * also math.max ensures that there are no negative values for tax due calculations
        */
         switch (filingStatus) {

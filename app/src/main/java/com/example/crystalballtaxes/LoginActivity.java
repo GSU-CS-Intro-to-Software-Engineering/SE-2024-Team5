@@ -1,14 +1,11 @@
 package com.example.crystalballtaxes;
 
-import static android.content.ContentValues.TAG;
 
-import android.annotation.SuppressLint;
+
+
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,24 +14,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import com.example.crystalballtaxes.DatabaseHelper;
-
+import java.util.Objects;
 
 
 public class LoginActivity extends AppCompatActivity {
     private EditText loginEmailInput, loginPassInput;
-    private TextView forgetPass;
-    private Button loginBtn, signUpBtn;
     private ProgressBar progressBar;
     private FirebaseAuth mAuth;
     private DatabaseHelper db;
@@ -61,9 +50,9 @@ public class LoginActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.loginProgressBar);
         loginEmailInput = findViewById(R.id.emailEditTxt);
         loginPassInput = findViewById(R.id.passwordEditTxt);
-        forgetPass = findViewById(R.id.forgotPassTxt);
-        loginBtn = findViewById(R.id.loginBtn);
-        signUpBtn = findViewById(R.id.signUpBtn);
+        TextView forgetPass = findViewById(R.id.forgotPassTxt);
+        Button loginBtn = findViewById(R.id.loginBtn);
+        Button signUpBtn = findViewById(R.id.signUpBtn);
 
         progressBar.setVisibility(View.GONE);
 
@@ -78,9 +67,7 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         });
 
-        forgetPass.setOnClickListener(view -> {
-            forgotPassword();
-        });
+        forgetPass.setOnClickListener(view -> forgotPassword());
     }
 
     private void signInUser() {
@@ -104,24 +91,21 @@ public class LoginActivity extends AppCompatActivity {
         if (db != null && db.checkUser(email, password)) {
             // If SQLite check passes, then verify with Firebase
             mAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            progressBar.setVisibility(View.GONE);
-                            if (task.isSuccessful()) {
-                                // Both SQLite and Firebase authentication successful
-                                Toast.makeText(LoginActivity.this, "Login successful",
-                                        Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                intent.putExtra("userID", userID);
-                                startActivity(intent);
-                                finish();
-                            } else {
-                                // Firebase authentication failed
-                                Toast.makeText(LoginActivity.this,
-                                        "Firebase authentication failed: " + task.getException().getMessage(),
-                                        Toast.LENGTH_SHORT).show();
-                            }
+                    .addOnCompleteListener(this, task -> {
+                        progressBar.setVisibility(View.GONE);
+                        if (task.isSuccessful()) {
+                            // Both SQLite and Firebase authentication successful
+                            Toast.makeText(LoginActivity.this, "Login successful",
+                                    Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            intent.putExtra("userID", userID);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            // Firebase authentication failed
+                            Toast.makeText(LoginActivity.this,
+                                    "Firebase authentication failed: " + Objects.requireNonNull(task.getException()).getMessage(),
+                                    Toast.LENGTH_SHORT).show();
                         }
                     });
         } else {
@@ -138,16 +122,13 @@ public class LoginActivity extends AppCompatActivity {
             long userId = db.getUserIdFromEmail(email);
             if (userId != -1) {
                 mAuth.sendPasswordResetEmail(email)
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if (task.isSuccessful()) {
-                                    Toast.makeText(LoginActivity.this,
-                                            "Password reset email sent", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(LoginActivity.this,
-                                            "Failed to send reset email", Toast.LENGTH_SHORT).show();
-                                }
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(LoginActivity.this,
+                                        "Password reset email sent", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(LoginActivity.this,
+                                        "Failed to send reset email", Toast.LENGTH_SHORT).show();
                             }
                         });
             } else {
