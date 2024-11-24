@@ -114,6 +114,15 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
         }
     }
+    public void setFirebaseAuth(FirebaseAuth auth) {
+        this.mAuth = auth;
+    }
+    public void setDatabase(DatabaseHelper database) {
+        this.db = database;
+    }
+    public static boolean isValidInput(String email, String password) {
+        return !email.isEmpty() && !password.isEmpty();
+    }
 
     private void forgotPassword() {
         String email = loginEmailInput.getText().toString().trim();
