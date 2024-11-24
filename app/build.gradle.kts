@@ -33,10 +33,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     testOptions {
-        unitTests{
+        unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
-
+        }
+        packaging {
+            resources {
+                pickFirsts.add("mockito-extensions/org.mockito.plugins.MockMaker")
+            }
         }
         unitTests.all {
             it.useJUnit {
@@ -83,6 +87,9 @@ dependencies {
     androidTestImplementation(libs.espresso.intents)
     androidTestImplementation(libs.core.v150)
     androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.mockito.core.v570)
+    androidTestImplementation(libs.mockito.android.v570)
+    androidTestImplementation(libs.dexmaker.mockito)
 
     configurations.all {
         resolutionStrategy {

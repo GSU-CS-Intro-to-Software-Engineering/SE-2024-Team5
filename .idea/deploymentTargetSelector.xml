@@ -13,10 +13,10 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="LoginActivityInstrumentedTest">
+      <SelectionState runConfigName="SignUpActivityInstrumentedTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="SignUpActivityInstrumentedTest">
+      <SelectionState runConfigName="TaxResultsActivityInstrumentedTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

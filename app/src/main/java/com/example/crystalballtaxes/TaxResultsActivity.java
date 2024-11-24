@@ -24,15 +24,13 @@ public class TaxResultsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tax_results);
 
-        agiTextView = findViewById(R.id.AGItxtF);
-        taxableIncomeTextView = findViewById(R.id.taxableIncTxt);
-        grossTaxLiabilityTextView = findViewById(R.id.grossTaxLibTxt);
-        taxesDueTextView = findViewById(R.id.taxesDueTxt);
-        Button saveButton = findViewById(R.id.saveTaxInfoBtn);
-        Button homeButton = findViewById(R.id.backToHomeBtn);
-
+        initializeViews();
         currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US);
-        db = new DatabaseHelper(this);
+
+        // Only initialize db if it hasn't been injected (for testing)
+        if (db == null) {
+            db = new DatabaseHelper(this);
+        }
 
         // get user ID from intent
         userId = getIntent().getLongExtra("USER_ID", -1);
@@ -43,6 +41,21 @@ public class TaxResultsActivity extends AppCompatActivity {
             return;
         }
 
+        setupButtons();
+
+    }
+
+    private void initializeViews() {
+        agiTextView = findViewById(R.id.AGItxtF);
+        taxableIncomeTextView = findViewById(R.id.taxableIncTxt);
+        grossTaxLiabilityTextView = findViewById(R.id.grossTaxLibTxt);
+        taxesDueTextView = findViewById(R.id.taxesDueTxt);
+    }
+
+    private void setupButtons() {
+        Button saveButton = findViewById(R.id.saveTaxInfoBtn);
+        Button homeButton = findViewById(R.id.backToHomeBtn);
+
         saveButton.setOnClickListener(v -> Toast.makeText(this, "Tax results saved", Toast.LENGTH_SHORT).show());
 
         homeButton.setOnClickListener(v -> {
@@ -51,7 +64,6 @@ public class TaxResultsActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-        calculateAndDisplayTaxes();
     }
 
     @SuppressLint("SetTextI18n")
@@ -116,13 +128,13 @@ public class TaxResultsActivity extends AppCompatActivity {
         }
     }
 
+    public void setDatabaseHelper(DatabaseHelper dbHelper) {
+        this.db = dbHelper;
+    }
+
     private double calculateTaxBrackets(double taxableIncome, String filingStatus) {
         double tax = 0;
 
-        /*math.min/.max is allow for tax bracket upper limit to not be exceeded
-        * ex. if income is 30k and they're single it would tax the first 19k at 12% and the rest at 10%
-        * also math.max ensures that there are no negative values for tax due calculations
-       */
         switch (filingStatus) {
             case "Married Filing Jointly":
                 // 10% bracket
@@ -220,5 +232,9 @@ public class TaxResultsActivity extends AppCompatActivity {
         }
 
         return tax;
+    }
+
+    public void recalculateTaxes() {
+        calculateAndDisplayTaxes();
     }
 }

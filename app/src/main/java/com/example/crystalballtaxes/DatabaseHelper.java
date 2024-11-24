@@ -314,6 +314,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     }
 
     //rewrote to handle errors better
+
     @SuppressLint("Range")
     public boolean updateFilingStatus(long userId, String filingStatus) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -426,29 +427,45 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     //standardizing get methods to return a data structure instead of logging to tag
     @SuppressLint("Range")
     public Map<String, String> getUserTaxInfo(long userId) {
-        SQLiteDatabase db = this.getReadableDatabase();
         Map<String, String> taxInfo = new HashMap<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    TAX_INFO_TABLE,
+                    new String[]{INCOME, ABOVE_LINE_DEDUCTIONS, ITEMIZED_DEDUCTIONS, TAX_CREDITS, FILING_STATUS},
+                    USER_ID + " = ?",
+                    new String[]{String.valueOf(userId)},
+                    null, null, null
+            );
 
-        Cursor cursor = db.query(TAX_INFO_TABLE, null,
-                USER_ID + "=?",
-                new String[]{String.valueOf(userId)},
-                null, null, null);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            taxInfo.put("filing_status", cursor.getString(cursor.getColumnIndex(FILING_STATUS)));
-            taxInfo.put("income", cursor.getString(cursor.getColumnIndex(INCOME)));
-            taxInfo.put("above_line_deductions", cursor.getString(cursor.getColumnIndex(ABOVE_LINE_DEDUCTIONS)));
-            taxInfo.put("itemized_deductions", cursor.getString(cursor.getColumnIndex(ITEMIZED_DEDUCTIONS)));
-            taxInfo.put("tax_credits", cursor.getString(cursor.getColumnIndex(TAX_CREDITS)));
-            cursor.close();
+            if (cursor != null && cursor.moveToFirst()) {
+                taxInfo.put("income", cursor.getString(cursor.getColumnIndex(INCOME)));
+                taxInfo.put("above_line_deductions", cursor.getString(cursor.getColumnIndex(ABOVE_LINE_DEDUCTIONS)));
+                taxInfo.put("itemized_deductions", cursor.getString(cursor.getColumnIndex(ITEMIZED_DEDUCTIONS)));
+                taxInfo.put("tax_credits", cursor.getString(cursor.getColumnIndex(TAX_CREDITS)));
+                taxInfo.put("filing_status", cursor.getString(cursor.getColumnIndex(FILING_STATUS)));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting tax info: " + e.getMessage());
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
-
         return taxInfo;
     }
-    /*
-    * this will allow the primary key of dependents to find the next available int
-    * for the dependents using the user id
-     */
+
+    @Override
+    public synchronized void close() {
+        SQLiteDatabase db = getWritableDatabase();
+        if (db != null) {
+            db.close();
+        }
+        super.close();
+    }
+
+    /* This will allow the primary key of dependents to find the next available int for the dependents using the user id */
     public int getNextDependentId(int userId) {
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT MAX(dependent_id) FROM dependents WHERE user_id = ?", new String[]{String.valueOf(userId)});
@@ -493,5 +510,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             return -1;
         }
     }
+
 
 }
