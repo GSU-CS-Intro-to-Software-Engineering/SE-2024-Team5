@@ -117,5 +117,8 @@ public class FilingStatusActivity extends AppCompatActivity {
         });
 
     }
+    public void setDatabaseHelper(DatabaseHelper dbHelper) {
+        this.db = dbHelper;
+    }
 
 }

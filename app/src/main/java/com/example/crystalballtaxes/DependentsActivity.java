@@ -180,4 +180,7 @@ public class DependentsActivity extends AppCompatActivity {
             Toast.makeText(this, "Error: User not found", Toast.LENGTH_SHORT).show();
         }
     }
+    public void setDatabaseHelper(DatabaseHelper dbHelper) {
+        this.db = dbHelper;
+    }
 }

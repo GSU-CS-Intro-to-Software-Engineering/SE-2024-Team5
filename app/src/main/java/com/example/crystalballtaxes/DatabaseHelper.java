@@ -109,6 +109,21 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         db.execSQL(CREATE_TABLE_TAX_INFO);
         db.execSQL(CREATE_TABLE_DEPENDENTS);
     }
+    public boolean userExists(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(USER_TABLE,
+                new String[]{KEY_ID},
+                KEY_ID + "=?",
+                new String[]{String.valueOf(userId)},
+                null, null, null);
+
+        boolean exists = cursor != null && cursor.getCount() > 0;
+        if (cursor != null) {
+            cursor.close();
+        }
+        return exists;
+    }
+
 
     //onupgrade function to wipe tables when version updates
     @Override
@@ -468,6 +483,12 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     /* This will allow the primary key of dependents to find the next available int for the dependents using the user id */
     public int getNextDependentId(int userId) {
         SQLiteDatabase db = getReadableDatabase();
+
+        if (!userExists(userId)) {
+            Log.e(TAG, "Cannot get next dependent ID: User ID " + userId + " does not exist");
+            return -1;
+        }
+
         Cursor cursor = db.rawQuery("SELECT MAX(dependent_id) FROM dependents WHERE user_id = ?", new String[]{String.valueOf(userId)});
         int nextId = 0;
         if (cursor.moveToFirst() && !cursor.isNull(0)) {
@@ -482,6 +503,10 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         ContentValues values = new ContentValues();
 
         try {
+            if (!userExists(userId)) {
+                Log.e(TAG, "Cannot add dependent: User ID " + userId + " does not exist");
+                return -1;
+            }
             // get the next available dependent id for this user
             int dependentId = getNextDependentId(userId);
 
