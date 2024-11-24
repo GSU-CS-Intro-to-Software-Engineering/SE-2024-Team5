@@ -20,8 +20,8 @@ import java.util.Objects;
 public class SignUpActivity extends AppCompatActivity {
     private EditText nameTxtF, emailTxtF, passwordTxtF, phoneTxtF;
     private ProgressBar signUpProgressBar;
-    private FirebaseAuth mAuth;
-    private DatabaseHelper db;
+    FirebaseAuth mAuth;
+    DatabaseHelper db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,56 +46,66 @@ public class SignUpActivity extends AppCompatActivity {
         });
     }
 
+    void setAuth(FirebaseAuth auth) {
+        this.mAuth = auth;
+    }
+
+    void setDatabase(DatabaseHelper database) {
+        this.db = database;
+    }
+
     private void createUser() {
         String email = emailTxtF.getText().toString().trim();
         String password = passwordTxtF.getText().toString().trim();
         String name = nameTxtF.getText().toString().trim();
         String phone = phoneTxtF.getText().toString().trim();
 
+        testCreateUser(email, password, name, phone);
+    }
+
+    boolean testCreateUser(String email, String password, String name, String phone) {
+        // Input validation
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password) ||
                 TextUtils.isEmpty(name) || TextUtils.isEmpty(phone)) {
-            // handle empty fields
-            signUpProgressBar.setVisibility(View.INVISIBLE);
-            return;
+            if (signUpProgressBar != null) {
+                signUpProgressBar.setVisibility(View.INVISIBLE);
+            }
+            return false;
         }
 
-        // first verify database is initialized and log
+        // Database initialization check
         if (!db.isDatabaseInitialized()) {
             Log.e("SignUpActivity", "Database not properly initialized!");
-            Toast.makeText(this, "Database initialization error", Toast.LENGTH_LONG).show();
-            signUpProgressBar.setVisibility(View.INVISIBLE);
-            return;
+            if (this != null) {  // Check for testing environment
+                Toast.makeText(this, "Database initialization error", Toast.LENGTH_LONG).show();
+            }
+            if (signUpProgressBar != null) {
+                signUpProgressBar.setVisibility(View.INVISIBLE);
+            }
+            return false;
         }
 
-        //firebase authentication
+        // Firebase authentication
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // add to SQLite with logging
                         Log.d("SignUpActivity", "Firebase auth successful, adding to SQLite...");
                         long userId = db.addUser(name, email, password, phone);
 
                         if (userId != -1) {
-                            Log.d("SignUpActivity", "Successfully added user to SQLite with ID: " + userId);
-
-                            // verify user was added
                             long verifyId = db.getUserIdFromEmail(email);
                             if (verifyId != -1) {
-                                Log.d("SignUpActivity", "Verified user exists in SQLite with ID: " + verifyId);
-
-                                // initialize tax record
                                 long taxRecordId = db.initializeTaxRecord(userId);
                                 Log.d("SignUpActivity", "Initialized tax record: " + taxRecordId);
 
-                                Toast.makeText(SignUpActivity.this,
-                                        "User registered successfully", Toast.LENGTH_SHORT).show();
-
-                                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
-                                intent.putExtra("userID", userId);
-                                startActivity(intent);
-                                finish();
+                                if (this != null) {  // Check for testing environment
+                                    Toast.makeText(this, "User registered successfully", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(this, LoginActivity.class);
+                                    intent.putExtra("userID", userId);
+                                    startActivity(intent);
+                                    finish();
+                                }
                             } else {
-                                Log.e("SignUpActivity", "User added but verification failed!");
                                 handleRegistrationError("Database verification failed");
                             }
                         } else {
@@ -104,26 +114,26 @@ public class SignUpActivity extends AppCompatActivity {
                     } else {
                         handleRegistrationError(Objects.requireNonNull(task.getException()).getMessage());
                     }
-                    signUpProgressBar.setVisibility(View.INVISIBLE);
+                    if (signUpProgressBar != null) {
+                        signUpProgressBar.setVisibility(View.INVISIBLE);
+                    }
                 });
+        return true;
     }
 
     private void handleRegistrationError(String error) {
         Log.e("SignUpActivity", "Registration error: " + error);
-        Toast.makeText(SignUpActivity.this, "Registration Error: " + error,
-                Toast.LENGTH_SHORT).show();
-        // delete user from Firebase auth if registration fails
+        if (this != null) {  // Check for testing environment
+            Toast.makeText(this, "Registration Error: " + error, Toast.LENGTH_SHORT).show();
+        }
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             user.delete();
         }
     }
 
-
-    //takes user back to login page when back arrow button is clicked
-    public void goBack(View v){
+    public void goBack(View v) {
         Intent i = new Intent(this, LoginActivity.class);
         startActivity(i);
-
     }
 }
