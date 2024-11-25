@@ -181,7 +181,8 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
     }
 
     private double parseAmount(String amount) {
-        return Double.parseDouble(amount.replaceAll("[$,]", ""));
+        String cleanAmount = amount.replaceAll("[$,]", "");
+        return Double.parseDouble(cleanAmount);
     }
 
     private void saveTaxInfo() {
@@ -212,6 +213,9 @@ public class FederalTaxInfoActivity extends AppCompatActivity {
             Log.e(TAG, "Error saving tax info: " + e.getMessage());
             Toast.makeText(this, "Error saving tax information", Toast.LENGTH_SHORT).show();
         }
+    }
+    public void setDatabaseHelper(DatabaseHelper dbHelper) {
+        this.db = dbHelper;
     }
 
     private void goToTaxResults() {
