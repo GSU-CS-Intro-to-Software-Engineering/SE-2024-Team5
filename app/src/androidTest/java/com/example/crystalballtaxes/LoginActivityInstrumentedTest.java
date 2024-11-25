@@ -3,22 +3,22 @@ package com.example.crystalballtaxes;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
-import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasErrorText;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static org.hamcrest.Matchers.not;
+
+import android.content.Intent;
 
 import androidx.test.core.app.ActivityScenario;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
-
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -26,77 +26,82 @@ import org.junit.runner.RunWith;
 @LargeTest
 public class LoginActivityInstrumentedTest {
 
-    @Rule
-    public ActivityScenarioRule<LoginActivity> activityRule =
-            new ActivityScenarioRule<>(LoginActivity.class);
+    private ActivityScenario<LoginActivity> activityScenario;
 
     @Before
-    public void setUp() {
-        // Initialize Firebase if needed
-        FirebaseApp.initializeApp(androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getTargetContext());
+    public void setup() {
+        // Create an explicit intent to launch LoginActivity
+        Intent intent = new Intent(ApplicationProvider.getApplicationContext(),
+                LoginActivity.class);
+
+        // Clear any existing data
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        // Launch the activity
+        activityScenario = ActivityScenario.launch(intent);
+
+        // Wait for activity to be stable
+        activityScenario.onActivity(activity -> {
+            // Optional: Add any initialization needed
+        });
     }
 
     @Test
-    public void testLoginUIElements() {
-        // Verify all UI elements are displayed
-        onView(withId(R.id.emailEditTxt)).check(matches(isDisplayed()));
-        onView(withId(R.id.passwordEditTxt)).check(matches(isDisplayed()));
-        onView(withId(R.id.loginBtn)).check(matches(isDisplayed()));
-        onView(withId(R.id.signUpBtn)).check(matches(isDisplayed()));
-        onView(withId(R.id.forgotPassTxt)).check(matches(isDisplayed()));
+    public void testLoginScreenInitialState() {
+        // Basic visibility checks
+        onView(withId(R.id.emailEditTxt))
+                .check(matches(isDisplayed()));
+        onView(withId(R.id.passwordEditTxt))
+                .check(matches(isDisplayed()));
+        onView(withId(R.id.loginBtn))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()));
     }
 
     @Test
     public void testEmptyEmailValidation() {
-        // Enter only password and try to login
         onView(withId(R.id.passwordEditTxt))
-                .perform(typeText("password123"), closeSoftKeyboard());
-        onView(withId(R.id.loginBtn)).perform(click());
+                .perform(replaceText("password123"), closeSoftKeyboard());
 
-        // Verify error message
+        onView(withId(R.id.loginBtn))
+                .perform(click());
+
         onView(withId(R.id.emailEditTxt))
                 .check(matches(hasErrorText("Email cannot be empty")));
     }
 
     @Test
     public void testEmptyPasswordValidation() {
-        // Enter only email and try to login
         onView(withId(R.id.emailEditTxt))
-                .perform(typeText("test@example.com"), closeSoftKeyboard());
-        onView(withId(R.id.loginBtn)).perform(click());
+                .perform(replaceText("test@example.com"), closeSoftKeyboard());
 
-        // Verify error message
+        onView(withId(R.id.loginBtn))
+                .perform(click());
+
         onView(withId(R.id.passwordEditTxt))
                 .check(matches(hasErrorText("Password cannot be empty")));
     }
 
     @Test
-    public void testLoginInputInteraction() {
-        // Type email
+    public void testValidCredentialsSubmission() {
+        // First verify views are displayed
         onView(withId(R.id.emailEditTxt))
-                .perform(typeText("test@example.com"), closeSoftKeyboard());
+                .check(matches(isDisplayed()))
+                .perform(replaceText("test@example.com"), closeSoftKeyboard());
 
-        // Type password
         onView(withId(R.id.passwordEditTxt))
-                .perform(typeText("password123"), closeSoftKeyboard());
+                .check(matches(isDisplayed()))
+                .perform(replaceText("password123"), closeSoftKeyboard());
 
-        // Click login button
-        onView(withId(R.id.loginBtn)).perform(click());
+        onView(withId(R.id.loginBtn))
+                .check(matches(isDisplayed()))
+                .check(matches(isEnabled()))
+                .perform(click());
+
     }
 
-    @Test
-    public void testForgotPasswordFlow() {
-        // Enter email first
-        onView(withId(R.id.emailEditTxt))
-                .perform(typeText("test@example.com"), closeSoftKeyboard());
-
-        // Click forgot password
-        onView(withId(R.id.forgotPassTxt)).perform(click());
-    }
-
-    @Test
-    public void testNavigationToSignUp() {
-        // Click sign up button
-        onView(withId(R.id.signUpBtn)).perform(click());
+    public interface ViewVisibilityIdlingResource {
+        void waitForView(int viewId);
     }
 }

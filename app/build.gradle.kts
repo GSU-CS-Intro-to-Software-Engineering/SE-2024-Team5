@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.com.google.firebase.firebase.auth2)
     implementation(libs.firebase.analytics)
     implementation(libs.espresso.intents)
+    implementation(libs.ext.junit)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.android)

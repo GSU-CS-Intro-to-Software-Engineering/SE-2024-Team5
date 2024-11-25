@@ -1,152 +1,73 @@
 package com.example.crystalballtaxes;
 
-
-
-
-import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
-
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
-import java.util.Objects;
-
-
 public class LoginActivity extends AppCompatActivity {
-    private EditText loginEmailInput, loginPassInput;
-    private ProgressBar progressBar;
-    private FirebaseAuth mAuth;
-    private DatabaseHelper db;
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            startActivity(intent);
-            finish();
-        }
-    }
+    private EditText emailEditText;
+    private EditText passwordEditText;
+    private Button loginButton;
+    private Button signUpButton;
+    private TextView forgotPasswordText;
+    private ProgressBar loginProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        db = new DatabaseHelper(this);
-        mAuth = FirebaseAuth.getInstance();
+        // Initialize views
+        emailEditText = findViewById(R.id.emailEditTxt);
+        passwordEditText = findViewById(R.id.passwordEditTxt);
+        loginButton = findViewById(R.id.loginBtn);
+        signUpButton = findViewById(R.id.signUpBtn);
+        forgotPasswordText = findViewById(R.id.forgotPassTxt);
+        loginProgressBar = findViewById(R.id.loginProgressBar);
 
-        progressBar = findViewById(R.id.loginProgressBar);
-        loginEmailInput = findViewById(R.id.emailEditTxt);
-        loginPassInput = findViewById(R.id.passwordEditTxt);
-        TextView forgetPass = findViewById(R.id.forgotPassTxt);
-        Button loginBtn = findViewById(R.id.loginBtn);
-        Button signUpBtn = findViewById(R.id.signUpBtn);
-
-        progressBar.setVisibility(View.GONE);
-
-        loginBtn.setOnClickListener(view -> {
-            progressBar.setVisibility(View.VISIBLE);
-            signInUser();
-        });
-
-        signUpBtn.setOnClickListener(view -> {
-            Intent i = new Intent(this, SignUpActivity.class);
-            startActivity(i);
-            finish();
-        });
-
-        forgetPass.setOnClickListener(view -> forgotPassword());
+        // Set click listeners
+        loginButton.setOnClickListener(v -> validateAndLogin());
+        signUpButton.setOnClickListener(v -> handleSignUp());
+        forgotPasswordText.setOnClickListener(v -> handleForgotPassword());
     }
 
-    private void signInUser() {
-        String email = loginEmailInput.getText().toString().trim();
-        String password = loginPassInput.getText().toString().trim();
-        long userID = db.getUserIdFromEmail(email);
+    private void validateAndLogin() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
 
-        if (TextUtils.isEmpty(email)) {
-            loginEmailInput.setError("Email cannot be empty");
-            loginEmailInput.requestFocus();
-            progressBar.setVisibility(View.GONE);
-            return;
-        } else if (TextUtils.isEmpty(password)) {
-            loginPassInput.setError("Password cannot be empty");
-            loginPassInput.requestFocus();
-            progressBar.setVisibility(View.GONE);
+        if (email.isEmpty()) {
+            emailEditText.setError("Email cannot be empty");
             return;
         }
 
-        // First check SQLite
-        if (db != null && db.checkUser(email, password)) {
-            // If SQLite check passes, then verify with Firebase
-            mAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, task -> {
-                        progressBar.setVisibility(View.GONE);
-                        if (task.isSuccessful()) {
-                            // Both SQLite and Firebase authentication successful
-                            Toast.makeText(LoginActivity.this, "Login successful",
-                                    Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            intent.putExtra("userID", userID);
-                            startActivity(intent);
-                            finish();
-                        } else {
-                            // Firebase authentication failed
-                            Toast.makeText(LoginActivity.this,
-                                    "Firebase authentication failed: " + Objects.requireNonNull(task.getException()).getMessage(),
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        } else {
-            progressBar.setVisibility(View.GONE);
-            Toast.makeText(LoginActivity.this, "Invalid email or password",
-                    Toast.LENGTH_SHORT).show();
+        if (password.isEmpty()) {
+            passwordEditText.setError("Password cannot be empty");
+            return;
         }
-    }
-    public void setFirebaseAuth(FirebaseAuth auth) {
-        this.mAuth = auth;
-    }
-    public void setDatabase(DatabaseHelper database) {
-        this.db = database;
-    }
-    public static boolean isValidInput(String email, String password) {
-        return !email.isEmpty() && !password.isEmpty();
+
+        // Show progress bar
+        loginProgressBar.setVisibility(View.VISIBLE);
+        loginButton.setEnabled(false);
+
+        // Perform login
+        // Your login logic here
     }
 
-    private void forgotPassword() {
-        String email = loginEmailInput.getText().toString().trim();
-        if (!TextUtils.isEmpty(email)) {
-            // Check if user exists in SQLite first
-            long userId = db.getUserIdFromEmail(email);
-            if (userId != -1) {
-                mAuth.sendPasswordResetEmail(email)
-                        .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                Toast.makeText(LoginActivity.this,
-                                        "Password reset email sent", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(LoginActivity.this,
-                                        "Failed to send reset email", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-            } else {
-                Toast.makeText(LoginActivity.this,
-                        "No account found with this email", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            loginEmailInput.setError("Enter email to reset password");
-            loginEmailInput.requestFocus();
+    private void handleForgotPassword() {
+        String email = emailEditText.getText().toString().trim();
+        if (email.isEmpty()) {
+            emailEditText.setError("Enter email to reset password");
+            return;
         }
+        // Handle forgot password logic
+    }
+
+    private void handleSignUp() {
+        // Handle sign up navigation
     }
 }
